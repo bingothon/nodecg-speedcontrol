@@ -64,9 +64,9 @@ async function updateTwitchInformation(runData: RunData): Promise<boolean> {
 
   // Constructing Twitch title and game to send off.
   const status = bundleConfig().twitch.streamTitle
-    .replace(new RegExp('{{game}}', 'g'), runData.game || '')
-    .replace(new RegExp('{{players}}', 'g'), formPlayerNamesStr(runData))
-    .replace(new RegExp('{{category}}', 'g'), runData.category || '');
+    .replace(/{{game}}/g, runData.game || '')
+    .replace(/{{players}}/g, formPlayerNamesStr(runData))
+    .replace(/{{category}}/g, runData.category || '');
 
   // Attempts to find the correct Twitch game directory.
   let { gameTwitch } = runData;
@@ -74,6 +74,7 @@ async function updateTwitchInformation(runData: RunData): Promise<boolean> {
     const [, srcomGameTwitch] = await to(searchForTwitchGame(runData.game));
     gameTwitch = srcomGameTwitch || runData.game;
   }
+  // TODO: Is this extra lookup needed if the next one just kinda does it anyway?
   if (gameTwitch) { // Verify game directory supplied exists on Twitch.
     gameTwitch = (await to(verifyTwitchDir(gameTwitch)))[1]?.name;
   }

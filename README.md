@@ -37,7 +37,7 @@ This bundle doesn't come with any graphics, you will need to create them yoursel
 
 ## Installation
 
-You will need [Node.js](https://nodejs.org) (14.x LTS tested) and [git](https://git-scm.com/) installed to install NodeCG, then see the [NodeCG documentation](http://nodecg.dev/) on how to install that. I also suggest installing `nodecg-cli`; information on that is also on the documentation just linked.
+You will need [Node.js](https://nodejs.org) (16.x LTS tested) and [git](https://git-scm.com/) installed to install NodeCG, then see the [NodeCG documentation](http://nodecg.dev/) on how to install that. I also suggest installing `nodecg-cli`; information on that is also on the documentation just linked.
 
 - `nodecg install speedcontrol/nodecg-speedcontrol` to install the latest version of nodecg-speedcontrol
 
@@ -47,7 +47,7 @@ This bundle can run without any extra configuration, but it's needed to use all 
 <a id="installation-tldr"></a>
 ### tl;dr installation
 
-Install [Node.js](https://nodejs.org) (14.x LTS tested) and [git](https://git-scm.com/), then make a folder anywhere and open a command prompt/shell/bash window, then run these commands in order:
+Install [Node.js](https://nodejs.org) (16.x LTS tested) and [git](https://git-scm.com/), then make a folder anywhere and open a command prompt/shell/bash window, then run these commands in order:
 
 ```
 npm install nodecg-cli -g
@@ -143,6 +143,7 @@ To easily install: `nodecg install BUNDLE`, where `BUNDLE` is the full name belo
 - [BSG Marathon](https://twitch.tv/bsg_marathon) 1-15 and from @Home and forwards.
 - [No Glitches Allowed](https://twitch.tv/speedrunslive) since No Glitches Allowed 4
 - [Completithon](https://twitch.tv/completithon) since Completithon 2019
+- [MDSR Summer '21](https://twitch.tv/ModernDOOMSpeedrunning)
 
 
 <a id="authors-contributors"></a>

@@ -126,6 +126,15 @@
           "type": "string",
           "default": "Games + Demos"
         },
+        "metadataUseExternal": {
+          "type": "boolean"
+        },
+        "commercialsExtraButtons": {
+          "type": "boolean"
+        },
+        "commercialsUseExternal": {
+          "type": "boolean"
+        },
         "ffzIntegration": {
           "type": "boolean",
           "default": false
@@ -154,7 +163,8 @@
         "clientSecret",
         "redirectURI",
         "streamTitle",
-        "streamDefaultGame"
+        "streamDefaultGame",
+        "ffzIntegration"
       ]
     },
     "schedule": {

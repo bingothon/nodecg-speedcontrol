@@ -92,9 +92,8 @@ export async function refreshToken(): Promise<void> {
 /**
  * Make a request to Twitch API.
  */
-async function request(
-  method: NeedleHttpVerbs, endpoint: string, data: BodyData = null, newAPI = false,
-): Promise<NeedleResponse> {
+// eslint-disable-next-line max-len
+async function request(method: NeedleHttpVerbs, endpoint: string, data: BodyData = null, newAPI = false): Promise<NeedleResponse> {
   const ep = `/${newAPI ? 'helix' : 'kraken'}${endpoint}`;
   try {
     nodecg.log.debug(`[Twitch] API ${method.toUpperCase()} request processing on ${ep}`);
@@ -166,6 +165,7 @@ async function refreshChannelInfo(): Promise<void> {
   }
 }
 
+// TODO: Add delay to this?
 /**
  * Returns the correct name of a game in the Twitch directory based on a search.
  * @param query String you wish to try to find a game with.
@@ -219,18 +219,38 @@ export async function updateChannelInfo(title?: string, game?: string): Promise<
       noTwitchGame = true;
       [, dir] = await to(verifyTwitchDir(bundleConfig().twitch.streamDefaultGame));
     }
-    const resp = await request(
-      'patch',
-      `/channels?broadcaster_id=${twitchAPIData.value.channelID}`,
-      {
+
+    if (!config.twitch.metadataUseExternal) {
+      const resp = await request(
+        'patch',
+        `/channels?broadcaster_id=${twitchAPIData.value.channelID}`,
+        {
+          title: title?.slice(0, 140),
+          game_id: dir?.id || '',
+        },
+        true,
+      );
+      if (resp.statusCode !== 204) {
+        throw new Error(JSON.stringify(resp.body));
+      }
+    } else { // Send out message for external code to listen to.
+      /* to(events.sendMessage('twitchExternalMetadata', {
+        channelID: twitchAPIData.value.channelID,
         title: title?.slice(0, 140),
-        game_id: dir?.id || '',
-      },
-      true,
-    );
-    if (resp.statusCode !== 204) {
-      throw new Error(JSON.stringify(resp.body));
+        gameID: dir?.id || '',
+      })); */
+      nodecg.sendMessage('twitchExternalMetadata', {
+        channelID: twitchAPIData.value.channelID,
+        title: title?.slice(0, 140),
+        gameID: dir?.id || '',
+      });
+      nodecg.log.info('[Twitch] Metadata request being sent to external script');
+      // Currently we assume it worked and don't get a confirmation.
+      // Checking *our* event system (server-to-server) isn't too hard, but checking
+      // NodeCG's server-to-server can never work, so for now not implementing it.
+      // For future-proofing, the message's types are set to allow an acknowledgement.
     }
+
     nodecg.log.info('[Twitch] Successfully updated channel information');
     // "New" API doesn't return anything so update the data with what we've got.
     twitchChannelInfo.value.title = title?.slice(0, 140) || '';
@@ -261,40 +281,62 @@ function updateCommercialTimer(): void {
 }
 
 /**
+ * Update commercial timer values, trigger check logic.
+ */
+function startCommercialTimer(dur: number): void {
+  if (twitchCommercialTimer.value.secondsRemaining > 0) {
+    throw new Error('Commercial timer already running');
+  }
+  twitchCommercialTimer.value.originalDuration = dur;
+  twitchCommercialTimer.value.secondsRemaining = dur;
+  twitchCommercialTimer.value.timestamp = Date.now();
+  updateCommercialTimer();
+}
+
+/**
  * Attempts to start a commercial on the set channel.
  */
-async function startCommercial(duration?: CommercialDuration):
-Promise<{ duration: CommercialDuration }> {
+async function startCommercial(duration?: CommercialDuration, fromDashboard = false):
+Promise<{ duration: CommercialDuration, fromDashboard: boolean }> {
   if (twitchAPIData.value.state !== 'on') {
     throw new Error('Integration not ready');
   }
+  if (twitchCommercialTimer.value.secondsRemaining > 0) {
+    throw new Error('Commercial already running');
+  }
+  nodecg.log.info('[Twitch] Requested a commercial to be started');
+  const dur = duration && typeof duration === 'number' ? duration : 180;
+
   try {
-    const dur = duration && typeof duration === 'number' ? duration : 180;
-    nodecg.log.info('[Twitch] Requested a commercial to be started');
-    const resp = await request(
-      'post',
-      '/channels/commercial',
-      {
-        broadcaster_id: twitchAPIData.value.channelID,
-        length: dur,
-      },
-      true,
-    );
-    if (resp.statusCode !== 200) {
-      throw new Error(JSON.stringify(resp.body));
+    if (!config.twitch.commercialsUseExternal) {
+      const resp = await request(
+        'post',
+        '/channels/commercial',
+        {
+          broadcaster_id: twitchAPIData.value.channelID,
+          length: dur,
+        },
+        true,
+      );
+      if (resp.statusCode !== 200) {
+        throw new Error(JSON.stringify(resp.body));
+      }
+    } else { // Send out message for external code to listen to.
+      to(events.sendMessage('twitchExternalCommercial', { duration: dur, fromDashboard }));
+      nodecg.sendMessage('twitchExternalCommercial', { duration: dur, fromDashboard });
+      nodecg.log.info('[Twitch] Commercial request being sent to external script');
+      // Currently we assume it worked and don't get a confirmation.
+      // Checking *our* event system (server-to-server) isn't too hard, but checking
+      // NodeCG's server-to-server can never work, so for now not implementing it.
+      // For future-proofing, the message's types are set to allow an acknowledgement.
     }
 
-    // Update commercial timer values, trigger check logic.
-    twitchCommercialTimer.value.originalDuration = dur;
-    twitchCommercialTimer.value.secondsRemaining = dur;
-    twitchCommercialTimer.value.timestamp = Date.now();
-    updateCommercialTimer();
-
+    startCommercialTimer(dur);
     nodecg.log.info(`[Twitch] Commercial started successfully (${dur} seconds)`);
     nodecg.sendMessage('twitchCommercialStarted', { duration: dur });
     nodecg.sendMessage('twitchAdStarted', { duration: dur }); // Legacy
     to(events.sendMessage('twitchCommercialStarted', { duration: dur }));
-    return { duration: dur };
+    return { duration: dur, fromDashboard };
   } catch (err) {
     nodecg.log.warn('[Twitch] Error starting commercial');
     nodecg.log.debug('[Twitch] Error starting commercial:', err);
@@ -416,14 +458,22 @@ nodecg.listenFor('twitchUpdateChannelInfo', (data, ack) => {
     .catch((err) => processAck(ack, err));
 });
 nodecg.listenFor('twitchStartCommercial', (data, ack) => {
-  startCommercial(data.duration)
-    .then(() => processAck(ack, null))
+  startCommercial(data.duration, data.fromDashboard)
+    .then((resp) => processAck(ack, null, resp))
     .catch((err) => processAck(ack, err));
 });
 nodecg.listenFor('playTwitchAd', (data, ack) => { // Legacy
-  startCommercial(data.duration)
-    .then(() => processAck(ack, null))
+  startCommercial(data.duration, data.fromDashboard)
+    .then((resp) => processAck(ack, null, resp))
     .catch((err) => processAck(ack, err));
+});
+nodecg.listenFor('twitchStartCommercialTimer', (data, ack) => {
+  try {
+    startCommercialTimer(data.duration);
+    processAck(ack, null);
+  } catch (err) {
+    processAck(ack, err);
+  }
 });
 nodecg.listenFor('twitchAPIRequest', (data, ack) => {
   request(data.method, data.endpoint, data.data, data.newAPI)
@@ -448,9 +498,17 @@ events.listenFor('twitchUpdateChannelInfo', (data, ack) => {
     .catch((err) => processAck(ack, err));
 });
 events.listenFor('twitchStartCommercial', (data, ack) => {
-  startCommercial(data.duration)
-    .then(() => processAck(ack, null))
+  startCommercial(data.duration, data.fromDashboard)
+    .then((resp) => processAck(ack, null, resp))
     .catch((err) => processAck(ack, err));
+});
+events.listenFor('twitchStartCommercialTimer', (data, ack) => {
+  try {
+    startCommercialTimer(data.duration);
+    processAck(ack, null);
+  } catch (err) {
+    processAck(ack, err);
+  }
 });
 events.listenFor('twitchAPIRequest', (data, ack) => {
   request(data.method, data.endpoint, data.data, data.newAPI)
