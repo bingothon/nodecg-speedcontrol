@@ -21,6 +21,7 @@ export = (nodecg: NodeCG.ServerAPI<Configschema>): ExtensionReturn => {
   require('./timer');
   require('./horaro-import');
   require('./oengus-import');
+  require('./combo-import');
   require('./twitch-api');
   require('./srcom-api');
   require('./ffz-ws');

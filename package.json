@@ -149,6 +149,13 @@
         "workspace": "Run Modifications"
       },
       {
+        "name": "combo-schedule-import",
+        "title": "Combo Schedule Import",
+        "file": "combo-schedule-import.html",
+        "width": 2,
+        "workspace": "Run Modifications"
+      },
+      {
         "name": "timer",
         "title": "Timer",
         "file": "timer.html",
