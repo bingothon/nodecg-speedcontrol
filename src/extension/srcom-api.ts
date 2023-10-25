@@ -141,7 +141,7 @@ export async function searchForUserData({
     return userDataCache[cacheKey];
   }
   try {
-    await sleep(1000);
+    await sleep(250);
     let data: Speedruncom.UserData | undefined;
     if (type === 'srcom') {
       const resp = await get(`/users/${encodeURIComponent(val)}`);
