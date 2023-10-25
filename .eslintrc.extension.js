@@ -26,6 +26,7 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/lines-between-class-members': 'off',
+    "linebreak-style": "off",
     // max-len set to ignore "import" lines (as they usually get long and messy).
     'max-len': [
       'error',
