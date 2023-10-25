@@ -3,7 +3,11 @@
 // This must go first so we can use module aliases!
 /* eslint-disable import/first */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-require('module-alias').addAlias('@nodecg-speedcontrol', require('path').join(__dirname, '.'));
+require('module-alias').addAlias(
+  '@nodecg-speedcontrol',
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('path').join(__dirname, '.')
+);
 
 import { ExtensionReturn } from '@nodecg-speedcontrol/types';
 import type NodeCG from '@alvancamp/test-nodecg-types';

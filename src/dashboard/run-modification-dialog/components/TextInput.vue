@@ -7,7 +7,7 @@
     :style="{
       'border-left': leftBorder ? '1px solid white' : 'unset',
     }"
-    @input="$emit('input', $event);"
+    @input="$emit('input', $event)"
   />
 </template>
 

@@ -24,13 +24,17 @@ function sendMsg(msg: string): Promise<string> {
     if (!ws || ws.readyState !== 1) {
       throw new Error('WebSocket not connected');
     }
-    nodecg.log.debug(`[FrankerFaceZ] Attempting to send message: ${msgNo} ${msg}`);
+    nodecg.log.debug(
+      `[FrankerFaceZ] Attempting to send message: ${msgNo} ${msg}`
+    );
     ws.send(`${msgNo} ${msg}`);
     const thisMsgNo = msgNo;
     msgNo += 1;
     const msgEvt = (data: WebSocket.RawData): void => {
       if (ws && data.toString().includes(`${thisMsgNo} ok`)) {
-        nodecg.log.debug(`[FrankerFaceZ] Message was successful: ${thisMsgNo} ${msg}`);
+        nodecg.log.debug(
+          `[FrankerFaceZ] Message was successful: ${thisMsgNo} ${msg}`
+        );
         ws.removeListener('message', msgEvt);
         resolve(data.toString().substring(data.toString().indexOf(' ') + 1));
       }
@@ -66,7 +70,9 @@ async function sendAuth(auth: string): Promise<void> {
       attempts += 1;
       const client = new TMI.Client(opts);
       await client.connect();
-      nodecg.log.debug('[FrankerFaceZ] Connected to Twitch chat to authenticate');
+      nodecg.log.debug(
+        '[FrankerFaceZ] Connected to Twitch chat to authenticate'
+      );
       await client.say('frankerfacezauthorizer', `AUTH ${auth}`);
       client.disconnect();
     } catch (err) {
@@ -91,35 +97,48 @@ export async function setChannels(names: string[]): Promise<void> {
   nodecg.log.info('[FrankerFaceZ] Attempting to set featured channels');
 
   // Remove any blacklisted names.
-  const toSend = names.filter((name) => (
-    !(config.twitch.ffzBlacklist || [])
-      .map((x) => x.toLowerCase())
-      .includes(name.toLowerCase())
-  ));
+  const toSend = names.filter(
+    (name) =>
+      !(config.twitch.ffzBlacklist || [])
+        .map((x) => x.toLowerCase())
+        .includes(name.toLowerCase())
+  );
 
   if (!config.twitch.ffzUseRepeater) {
     try {
       if (config.twitch.channelName) {
-        throw new Error('Featured channels cannot be set while '
-        + 'channelName is set in the configuration file');
+        throw new Error(
+          'Featured channels cannot be set while ' +
+            'channelName is set in the configuration file'
+        );
       }
       const msg = await sendMsg(
         `update_follow_buttons ${JSON.stringify([
           twitchAPIData.value.channelName,
           toSend,
-        ])}`,
+        ])}`
       );
       const clients = JSON.parse(msg.substring(3)).updated_clients;
-      nodecg.log.info(`[FrankerFaceZ] Featured channels have been updated for ${clients} viewers`);
+      nodecg.log.info(
+        `[FrankerFaceZ] Featured channels have been updated for ${clients} viewers`
+      );
     } catch (err) {
-      nodecg.log.warn('[FrankerFaceZ] Featured channels could not successfully be updated');
-      nodecg.log.debug('[FrankerFaceZ] Featured channels could not successfully be updated:', err);
+      nodecg.log.warn(
+        '[FrankerFaceZ] Featured channels could not successfully be updated'
+      );
+      nodecg.log.debug(
+        '[FrankerFaceZ] Featured channels could not successfully be updated:',
+        err
+      );
       throw err;
     }
-  } else { // Send out message for external code to listen to.
+  } else {
+    // Send out message for external code to listen to.
     to(events.sendMessage('repeaterFeaturedChannels', toSend));
     nodecg.sendMessage('repeaterFeaturedChannels', toSend);
-    nodecg.log.info('[FrankerFaceZ] Featured channels being sent to repeater code');
+    nodecg.log.info(
+      '[FrankerFaceZ] Featured channels being sent to repeater code'
+    );
     twitchAPIData.value.featuredChannels = toSend;
   }
 }
@@ -161,17 +180,32 @@ function ping(): void {
  */
 function pickServer(): string {
   switch (randomInt(0, 20)) {
-    case 1: case 2: case 3:
+    case 1:
+    case 2:
+    case 3:
       return 'wss://andknuckles.frankerfacez.com/';
-    case 4: case 5: case 6: case 7:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
       return 'wss://tuturu.frankerfacez.com/';
-    case 8: case 9: case 10: case 11:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
       return 'wss://lilz.frankerfacez.com/';
-    case 12: case 13: case 14: case 15:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
       return 'wss://yoohoo.frankerfacez.com/';
-    case 16: case 17: case 18: case 19:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
       return 'wss://pog.frankerfacez.com/';
-    case 0: default:
+    case 0:
+    default:
       return 'wss://catbag.frankerfacez.com/';
   }
 }
@@ -220,7 +254,9 @@ function connect(): void {
     clearTimeout(pingTO as NodeJS.Timeout);
     // No reconnection if Twitch API is disconnected.
     if (twitchAPIData.value.state === 'on') {
-      nodecg.log.warn('[FrankerFaceZ] Connection closed, will reconnect in 10 seconds');
+      nodecg.log.warn(
+        '[FrankerFaceZ] Connection closed, will reconnect in 10 seconds'
+      );
       setTimeout(connect, 10 * 1000);
     }
   });
@@ -244,7 +280,7 @@ function connect(): void {
         twitchAPIData.value.featuredChannels.splice(
           0,
           twitchAPIData.value.featuredChannels.length,
-          ...channels,
+          ...channels
         );
       }
     }
@@ -259,7 +295,12 @@ if (config.twitch.enabled && config.twitch.ffzIntegration) {
     twitchAPIData.on('change', (newVal, oldVal) => {
       if (newVal.state === 'on' && (!oldVal || oldVal.state !== 'on')) {
         connect();
-      } else if (ws && oldVal && oldVal.state === 'on' && newVal.state !== 'on') {
+      } else if (
+        ws &&
+        oldVal &&
+        oldVal.state === 'on' &&
+        newVal.state !== 'on'
+      ) {
         nodecg.log.info('[FrankerFaceZ] Connection closed');
         ws.close();
       }

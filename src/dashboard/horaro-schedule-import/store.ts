@@ -1,9 +1,18 @@
 import { HoraroImportSavedOpts } from '@nodecg-speedcontrol/types/schemas';
-import { replicantModule, ReplicantModule, ReplicantTypes } from '@nodecg-speedcontrol/_misc/replicant_store';
+import {
+  replicantModule,
+  ReplicantModule,
+  ReplicantTypes,
+} from '@nodecg-speedcontrol/_misc/replicant_store';
 import clone from 'clone';
 import Vue from 'vue';
 import Vuex, { Store } from 'vuex';
-import { getModule, Module, Mutation, VuexModule } from 'vuex-module-decorators';
+import {
+  getModule,
+  Module,
+  Mutation,
+  VuexModule,
+} from 'vuex-module-decorators';
 
 Vue.use(Vuex);
 
@@ -51,14 +60,21 @@ class OurModule extends VuexModule {
   @Mutation
   saveOpts(): void {
     replicantModule.setReplicant<HoraroImportSavedOpts>({
-      name: 'horaroImportSavedOpts', val: clone(this.opts),
+      name: 'horaroImportSavedOpts',
+      val: clone(this.opts),
     });
   }
 
   @Mutation
-  updateColumn(
-    { name, value, custom }: { name: string, value: number | null, custom: boolean },
-  ): void {
+  updateColumn({
+    name,
+    value,
+    custom,
+  }: {
+    name: string;
+    value: number | null;
+    custom: boolean;
+  }): void {
     if (custom) {
       Vue.set(this.opts.columns.custom, name, value);
     } else {

@@ -14,9 +14,9 @@ export function msToTimeStr(ms: number): string {
   const seconds = Math.floor((ms / 1000) % 60);
   const minutes = Math.floor((ms / (1000 * 60)) % 60);
   const hours = Math.floor(ms / (1000 * 60 * 60));
-  return `${padTimeNumber(hours)
-  }:${padTimeNumber(minutes)
-  }:${padTimeNumber(seconds)}`;
+  return `${padTimeNumber(hours)}:${padTimeNumber(minutes)}:${padTimeNumber(
+    seconds
+  )}`;
 }
 
 /**
@@ -32,10 +32,15 @@ export function getDialog(name: string): Window | null {
     }
     return iframe;
   } catch (err) {
-    nodecg.log.error(`getDialog could not successfully find dialog "${name}":`, err);
+    nodecg.log.error(
+      `getDialog could not successfully find dialog "${name}":`,
+      err
+    );
     // eslint-disable-next-line no-alert
-    window.alert('Attempted to open a NodeCG dialog but failed (if you'
-      + ' are using a standalone version of a dashboard panel, this is not yet supported).');
+    window.alert(
+      'Attempted to open a NodeCG dialog but failed (if you' +
+        ' are using a standalone version of a dashboard panel, this is not yet supported).'
+    );
   }
   return null;
 }

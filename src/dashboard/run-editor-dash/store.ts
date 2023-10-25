@@ -1,10 +1,18 @@
 import type { RunData } from '@nodecg-speedcontrol/types';
 import type { RunDataArray } from '@nodecg-speedcontrol/types/schemas';
-import { replicantModule, ReplicantModule } from '@nodecg-speedcontrol/_misc/replicant_store';
+import {
+  replicantModule,
+  ReplicantModule,
+} from '@nodecg-speedcontrol/_misc/replicant_store';
 import clone from 'clone';
 import Vue from 'vue';
 import Vuex, { Store } from 'vuex';
-import { getModule, Module, Mutation, VuexModule } from 'vuex-module-decorators';
+import {
+  getModule,
+  Module,
+  Mutation,
+  VuexModule,
+} from 'vuex-module-decorators';
 
 Vue.use(Vuex);
 
@@ -12,7 +20,10 @@ Vue.use(Vuex);
 class OurModule extends VuexModule {
   @Mutation
   updateRunOrder(runs: RunData[]): void {
-    replicantModule.setReplicant<RunDataArray>({ name: 'runDataArray', val: clone(runs) });
+    replicantModule.setReplicant<RunDataArray>({
+      name: 'runDataArray',
+      val: clone(runs),
+    });
   }
 }
 

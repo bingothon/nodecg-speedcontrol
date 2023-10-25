@@ -52,19 +52,16 @@
     </div>
     <div class="mt-1">
       <!-- Import Button, if importing -->
-      <v-btn
-        v-if="importStatus.importing"
-        disabled
-        block
-      >
-        {{ $t('importProgress', { item: importStatus.item, total: importStatus.total }) }}
+      <v-btn v-if="importStatus.importing" disabled block>
+        {{
+          $t('importProgress', {
+            item: importStatus.item,
+            total: importStatus.total,
+          })
+        }}
       </v-btn>
       <!-- Import Button, if not importing -->
-      <v-btn
-        v-else
-        block
-        @click="importConfirm"
-      >
+      <v-btn v-else block @click="importConfirm">
         {{ $t('import') }}
       </v-btn>
     </div>
@@ -80,7 +77,8 @@ import { replicantNS } from '../_misc/replicant_store';
 
 @Component
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.oengusImportStatus) readonly importStatus!: OengusImportStatus;
+  @replicantNS.State((s) => s.reps.oengusImportStatus)
+  readonly importStatus!: OengusImportStatus;
   marathonShort = nodecg.bundleConfig.oengus.defaultMarathon || '';
   useJapanese = nodecg.bundleConfig.oengus.useJapanese;
 
@@ -111,7 +109,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }

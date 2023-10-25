@@ -7,9 +7,7 @@ module.exports = {
   parserOptions: {
     project: 'tsconfig.extension.json',
   },
-  plugins: [
-    '@typescript-eslint',
-  ],
+  plugins: ['@typescript-eslint'],
   extends: [
     'airbnb-base',
     'airbnb-typescript/base',
@@ -29,15 +27,45 @@ module.exports = {
   rules: {
     '@typescript-eslint/lines-between-class-members': 'off',
     // max-len set to ignore "import" lines (as they usually get long and messy).
-    'max-len': ['error', { code: 100, ignorePattern: '^import\\s.+\\sfrom\\s.+;' }],
+    'max-len': [
+      'error',
+      { code: 100, ignorePattern: '^import\\s.+\\sfrom\\s.+;' },
+    ],
     // I mainly have this off as it ruins auto import sorting in VSCode.
     'object-curly-newline': 'off',
-    'import/extensions': ['error', 'ignorePackages', {
-      js: 'never',
-      jsx: 'never',
-      ts: 'never',
-      tsx: 'never',
-    }],
+    'comma-dangle': [
+      'error',
+      {
+        arrays: 'always-multiline',
+        objects: 'always-multiline',
+        imports: 'always-multiline',
+        exports: 'always-multiline',
+        functions: 'never',
+      },
+    ],
+    '@typescript-eslint/comma-dangle': [
+      'error',
+      {
+        arrays: 'always-multiline',
+        objects: 'always-multiline',
+        imports: 'always-multiline',
+        exports: 'always-multiline',
+        functions: 'never',
+      },
+    ],
+    'operator-linebreak': 'off',
+    'implicit-arrow-linebreak': 'off',
+    'function-paren-newline': 'off',
+    'import/extensions': [
+      'error',
+      'ignorePackages',
+      {
+        js: 'never',
+        jsx: 'never',
+        ts: 'never',
+        tsx: 'never',
+      },
+    ],
 
     'require-atomic-updates': 'off',
     'no-restricted-syntax': 'off',
@@ -45,15 +73,20 @@ module.exports = {
   },
 
   // Overrides for types.
-  overrides: [{
-    files: ['**/*.d.ts'],
-    rules: {
-      // @typescript-eslint/no-unused-vars does not work with type definitions
-      '@typescript-eslint/no-unused-vars': 'off',
-      // Sometimes eslint complains about this for types (usually when using namespaces).
-      'import/prefer-default-export': 'off',
-      // Types are only used for development (usually!) so dev dependencies are fine.
-      'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
-    }
-  }],
+  overrides: [
+    {
+      files: ['**/*.d.ts'],
+      rules: {
+        // @typescript-eslint/no-unused-vars does not work with type definitions
+        '@typescript-eslint/no-unused-vars': 'off',
+        // Sometimes eslint complains about this for types (usually when using namespaces).
+        'import/prefer-default-export': 'off',
+        // Types are only used for development (usually!) so dev dependencies are fine.
+        'import/no-extraneous-dependencies': [
+          'error',
+          { devDependencies: true },
+        ],
+      },
+    },
+  ],
 };

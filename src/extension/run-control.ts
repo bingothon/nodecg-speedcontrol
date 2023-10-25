@@ -1,4 +1,10 @@
-import { RunData, RunDataActiveRun, RunDataPlayer, RunDataTeam, SendMessageArgsMap } from '@nodecg-speedcontrol/types'; // eslint-disable-line object-curly-newline, max-len
+import {
+  RunData,
+  RunDataActiveRun,
+  RunDataPlayer,
+  RunDataTeam,
+  SendMessageArgsMap,
+} from '@nodecg-speedcontrol/types'; // eslint-disable-line object-curly-newline, max-len
 import clone from 'clone';
 import _ from 'lodash';
 import { setChannels } from './ffz-ws';
@@ -6,9 +12,23 @@ import { searchForTwitchGame } from './srcom-api';
 import { resetTimer } from './timer';
 import { updateChannelInfo, verifyTwitchDir } from './twitch-api';
 import * as events from './util/events';
-import { findRunIndexFromId, formPlayerNamesStr, getTwitchChannels, msToTimeStr, processAck, timeStrToMS, to } from './util/helpers'; // eslint-disable-line object-curly-newline, max-len
+import {
+  findRunIndexFromId,
+  formPlayerNamesStr,
+  getTwitchChannels,
+  msToTimeStr,
+  processAck,
+  timeStrToMS,
+  to,
+} from './util/helpers'; // eslint-disable-line object-curly-newline, max-len
 import { get } from './util/nodecg';
-import { runDataActiveRun, runDataActiveRunSurrounding, runDataArray, timer, twitchAPIData } from './util/replicants';
+import {
+  runDataActiveRun,
+  runDataActiveRunSurrounding,
+  runDataArray,
+  timer,
+  twitchAPIData,
+} from './util/replicants';
 
 const nodecg = get();
 
@@ -28,26 +48,34 @@ function changeSurroundingRuns(): void {
 
     // Try to find currently set runs in the run data array.
     const currentIndex = findRunIndexFromId(current.id);
-    const previousIndex = findRunIndexFromId(runDataActiveRunSurrounding.value.previous);
-    const nextIndex = findRunIndexFromId(runDataActiveRunSurrounding.value.next);
+    const previousIndex = findRunIndexFromId(
+      runDataActiveRunSurrounding.value.previous
+    );
+    const nextIndex = findRunIndexFromId(
+      runDataActiveRunSurrounding.value.next
+    );
 
-    if (currentIndex >= 0) { // Found current run in array.
+    if (currentIndex >= 0) {
+      // Found current run in array.
       if (currentIndex > 0) {
-        [previous,, next] = runDataArray.value.slice(currentIndex - 1);
-      } else { // We're at the start and can't splice -1.
+        [previous, , next] = runDataArray.value.slice(currentIndex - 1);
+      } else {
+        // We're at the start and can't splice -1.
         [, next] = runDataArray.value.slice(0);
       }
-    } else if (previousIndex >= 0) { // Found previous run in array, use for reference.
-      [previous,, next] = runDataArray.value.slice(previousIndex);
-    } else if (nextIndex >= 0) { // Found next run in array, use for reference.
-      [previous,, next] = runDataArray.value.slice(nextIndex - 2);
+    } else if (previousIndex >= 0) {
+      // Found previous run in array, use for reference.
+      [previous, , next] = runDataArray.value.slice(previousIndex);
+    } else if (nextIndex >= 0) {
+      // Found next run in array, use for reference.
+      [previous, , next] = runDataArray.value.slice(nextIndex - 2);
     }
   }
 
   runDataActiveRunSurrounding.value = {
-    previous: (previous) ? previous.id : undefined,
-    current: (current) ? current.id : undefined,
-    next: (next) ? next.id : undefined,
+    previous: previous ? previous.id : undefined,
+    current: current ? current.id : undefined,
+    next: next ? next.id : undefined,
   };
 
   nodecg.log.debug('[Run Control] Recalculated surrounding runs');
@@ -75,14 +103,17 @@ async function updateTwitchInformation(runData: RunData): Promise<boolean> {
     gameTwitch = srcomGameTwitch || runData.game;
   }
   // TODO: Is this extra lookup needed if the next one just kinda does it anyway?
-  if (gameTwitch) { // Verify game directory supplied exists on Twitch.
+  if (gameTwitch) {
+    // Verify game directory supplied exists on Twitch.
     gameTwitch = (await to(verifyTwitchDir(gameTwitch)))[1]?.name;
   }
 
-  to(updateChannelInfo(
-    status,
-    gameTwitch || nodecg.bundleConfig.twitch.streamDefaultGame,
-  ));
+  to(
+    updateChannelInfo(
+      status,
+      gameTwitch || nodecg.bundleConfig.twitch.streamDefaultGame
+    )
+  );
 
   // Construct/send featured channels if enabled.
   if (nodecg.bundleConfig.twitch.ffzIntegration) {
@@ -115,7 +146,10 @@ async function changeActiveRun(id?: string): Promise<boolean> {
       return noTwitchGame;
     }
   } catch (err) {
-    nodecg.log.debug('[Run Control] Could not successfully change active run:', err);
+    nodecg.log.debug(
+      '[Run Control] Could not successfully change active run:',
+      err
+    );
     throw err;
   }
 }
@@ -149,7 +183,11 @@ async function removeRun(id?: string): Promise<void> {
  * @param prevID ID of the run that this run will be inserted after if applicable.
  * @param twitch Whether to update the Twitch information as well.
  */
-async function modifyRun(runData: RunData, prevID?: string, twitch = false): Promise<boolean> {
+async function modifyRun(
+  runData: RunData,
+  prevID?: string,
+  twitch = false
+): Promise<boolean> {
   try {
     // Loops through data, removes any keys that are falsey.
     const data = _.pickBy(runData, _.identity) as RunData;
@@ -171,16 +209,19 @@ async function modifyRun(runData: RunData, prevID?: string, twitch = false): Pro
     }
 
     // Check all players have names, if not throw an error.
-    const allNamesAdded = data.teams.every((team) => (
+    const allNamesAdded = data.teams.every((team) =>
       team.players.every((player) => !!player.name)
-    ));
+    );
     if (!allNamesAdded) {
       throw new Error('Player(s) are missing name(s)');
     }
 
     // If set as relay, set any missing indexes if needed. If the opposite, delete them.
     if (runData.relay) {
-      data.teams = data.teams.map((team) => ({ relayPlayerID: team.players[0]?.id, ...team }));
+      data.teams = data.teams.map((team) => ({
+        relayPlayerID: team.players[0]?.id,
+        ...team,
+      }));
     } else {
       for (const team of data.teams) {
         delete team.relayPlayerID;
@@ -193,7 +234,8 @@ async function modifyRun(runData: RunData, prevID?: string, twitch = false): Pro
         const ms = timeStrToMS(data.estimate);
         data.estimate = msToTimeStr(ms);
         data.estimateS = ms / 1000;
-      } else { // Throw error if format is incorrect.
+      } else {
+        // Throw error if format is incorrect.
         throw new Error('Estimate is in incorrect format');
       }
     } else {
@@ -207,7 +249,8 @@ async function modifyRun(runData: RunData, prevID?: string, twitch = false): Pro
         const ms = timeStrToMS(data.setupTime);
         data.setupTime = msToTimeStr(ms);
         data.setupTimeS = ms / 1000;
-      } else { // Throw error if format is incorrect.
+      } else {
+        // Throw error if format is incorrect.
         throw new Error('Setup time is in incorrect format');
       }
     } else {
@@ -216,17 +259,25 @@ async function modifyRun(runData: RunData, prevID?: string, twitch = false): Pro
     }
 
     const index = findRunIndexFromId(data.id);
-    if (index >= 0) { // Run already exists, edit it.
+    if (index >= 0) {
+      // Run already exists, edit it.
       if (runDataActiveRun.value && data.id === runDataActiveRun.value.id) {
         runDataActiveRun.value = clone(data);
       }
       runDataArray.value[index] = clone(data);
-    } else { // Run is new, add it.
+    } else {
+      // Run is new, add it.
       const prevIndex = findRunIndexFromId(prevID);
-      runDataArray.value.splice(prevIndex + 1 || runDataArray.value.length, 0, clone(data));
+      runDataArray.value.splice(
+        prevIndex + 1 || runDataArray.value.length,
+        0,
+        clone(data)
+      );
     }
 
-    const noTwitchGame = (twitch) ? await updateTwitchInformation(runData) : false;
+    const noTwitchGame = twitch
+      ? await updateTwitchInformation(runData)
+      : false;
     return noTwitchGame;
   } catch (err) {
     nodecg.log.debug('[Run Control] Could not successfully modify run:', err);
@@ -240,7 +291,11 @@ async function modifyRun(runData: RunData, prevID?: string, twitch = false): Pro
  * @param teamID ID of the team inside of the run you wish to modify.
  * @param playerID ID of the player you wish to set as the one currently playing.
  */
-async function modifyRelayPlayerID(runID: string, teamID: string, playerID: string): Promise<void> {
+async function modifyRelayPlayerID(
+  runID: string,
+  teamID: string,
+  playerID: string
+): Promise<void> {
   try {
     const run = clone(runDataArray.value.find((r) => r.id === runID));
     if (!run) {
@@ -260,7 +315,10 @@ async function modifyRelayPlayerID(runID: string, teamID: string, playerID: stri
     run.teams[teamIndex].relayPlayerID = player.id;
     await modifyRun(run);
   } catch (err) {
-    nodecg.log.debug('[Run Control] Could not successfully modify relay player ID:', err);
+    nodecg.log.debug(
+      '[Run Control] Could not successfully modify relay player ID:',
+      err
+    );
     throw err;
   }
 }
@@ -277,7 +335,10 @@ async function removeActiveRun(): Promise<void> {
     to(resetTimer(true));
     nodecg.log.debug('[Run Control] Successfully removed active run');
   } catch (err) {
-    nodecg.log.debug('[Run Control] Could not successfully remove active run:', err);
+    nodecg.log.debug(
+      '[Run Control] Could not successfully remove active run:',
+      err
+    );
   }
 }
 
@@ -294,17 +355,23 @@ async function removeAllRuns(): Promise<void> {
     to(resetTimer(true));
     nodecg.log.debug('[Run Control] Successfully removed all runs');
   } catch (err) {
-    nodecg.log.debug('[Run Control] Could not successfully remove all runs:', err);
+    nodecg.log.debug(
+      '[Run Control] Could not successfully remove all runs:',
+      err
+    );
     throw err;
   }
 }
 
 // NodeCG messaging system.
-nodecg.listenFor('changeActiveRun', (id: SendMessageArgsMap['changeActiveRun'], ack) => {
-  changeActiveRun(id)
-    .then((noTwitchGame) => processAck(ack, null, noTwitchGame))
-    .catch((err) => processAck(ack, err));
-});
+nodecg.listenFor(
+  'changeActiveRun',
+  (id: SendMessageArgsMap['changeActiveRun'], ack) => {
+    changeActiveRun(id)
+      .then((noTwitchGame) => processAck(ack, null, noTwitchGame))
+      .catch((err) => processAck(ack, err));
+  }
+);
 nodecg.listenFor('removeRun', (id: SendMessageArgsMap['removeRun'], ack) => {
   removeRun(id)
     .then(() => processAck(ack, null))
@@ -316,11 +383,14 @@ nodecg.listenFor('modifyRun', (data: SendMessageArgsMap['modifyRun'], ack) => {
     .then((noTwitchGame) => processAck(ack, null, noTwitchGame))
     .catch((err) => processAck(ack, err));
 });
-nodecg.listenFor('modifyRelayPlayerID', (data: SendMessageArgsMap['modifyRelayPlayerID'], ack) => {
-  modifyRelayPlayerID(data.runID, data.teamID, data.playerID)
-    .then(() => processAck(ack, null))
-    .catch((err) => processAck(ack, err));
-});
+nodecg.listenFor(
+  'modifyRelayPlayerID',
+  (data: SendMessageArgsMap['modifyRelayPlayerID'], ack) => {
+    modifyRelayPlayerID(data.runID, data.teamID, data.playerID)
+      .then(() => processAck(ack, null))
+      .catch((err) => processAck(ack, err));
+  }
+);
 nodecg.listenFor('changeToNextRun', (data, ack) => {
   changeActiveRun(runDataActiveRunSurrounding.value.next)
     .then((noTwitchGame) => processAck(ack, null, noTwitchGame))

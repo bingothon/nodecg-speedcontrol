@@ -1,11 +1,28 @@
 import { RunDataActiveRun, RunFinishTimes } from '@nodecg-speedcontrol/types';
-import type { DefaultSetupTime, HoraroImportSavedOpts, HoraroImportStatus, OengusImportStatus, RunDataActiveRunSurrounding, RunDataArray, Timer, TimerChangesDisabled, TwitchAPIData, TwitchChannelInfo, TwitchCommercialTimer } from '@nodecg-speedcontrol/types/schemas';
+import type {
+  DefaultSetupTime,
+  HoraroImportSavedOpts,
+  HoraroImportStatus,
+  OengusImportStatus,
+  RunDataActiveRunSurrounding,
+  RunDataArray,
+  Timer,
+  TimerChangesDisabled,
+  TwitchAPIData,
+  TwitchChannelInfo,
+  TwitchCommercialTimer,
+} from '@nodecg-speedcontrol/types/schemas';
 import clone from 'clone';
 import type NodeCGTypes from '@alvancamp/test-nodecg-types';
 import Vue from 'vue';
 import type { Store } from 'vuex';
 import { namespace } from 'vuex-class';
-import { getModule, Module, Mutation, VuexModule } from 'vuex-module-decorators';
+import {
+  getModule,
+  Module,
+  Mutation,
+  VuexModule,
+} from 'vuex-module-decorators';
 
 // Declaring replicants.
 export const reps: {
@@ -63,16 +80,22 @@ export class ReplicantModule extends VuexModule {
 
   // This sets the state object above when a replicant sends an update.
   @Mutation
-  setState({ name, val }: { name: string, val: unknown }): void {
+  setState({ name, val }: { name: string; val: unknown }): void {
     Vue.set(this.reps, name, clone(val));
   }
 
   // This is a generic mutation to update a named replicant.
   // If the replicant is an object type, it'll merge in differences if needed.
   @Mutation
-  setReplicant<K>(
-    { name, val, merge = true }: { name: string, val: Partial<K>, merge?: boolean },
-  ): void {
+  setReplicant<K>({
+    name,
+    val,
+    merge = true,
+  }: {
+    name: string;
+    val: Partial<K>;
+    merge?: boolean;
+  }): void {
     const rep = this.reps[name];
     let merged = val;
     if (rep && merge && typeof rep === 'object' && !Array.isArray(rep)) {

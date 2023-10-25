@@ -5,7 +5,12 @@ import livesplitCore from 'livesplit-core';
 import * as events from './util/events';
 import { msToTimeStr, processAck, timeStrToMS } from './util/helpers';
 import { get } from './util/nodecg';
-import { runDataActiveRun, runFinishTimes, timer as timerRep, timerChangesDisabled } from './util/replicants';
+import {
+  runDataActiveRun,
+  runFinishTimes,
+  timer as timerRep,
+  timerChangesDisabled,
+} from './util/replicants';
 
 const nodecg = get();
 let timer: livesplitCore.Timer;
@@ -53,7 +58,9 @@ function setGameTime(ms: number): void {
     livesplitCore.TimeSpan.fromSeconds(0).with((t) => timer.setLoadingTimes(t));
     timer.initializeGameTime();
   }
-  livesplitCore.TimeSpan.fromSeconds(ms / 1000).with((t) => timer.setGameTime(t));
+  livesplitCore.TimeSpan.fromSeconds(ms / 1000).with((t) =>
+    timer.setGameTime(t)
+  );
   nodecg.log.debug(`[Timer] Game time set to ${ms}`);
 }
 
@@ -155,7 +162,9 @@ async function stopTimer(id?: string, forfeit?: boolean): Promise<void> {
     }
     // Error if there's an active run but no UUID was sent.
     if (!id && runDataActiveRun.value && runDataActiveRun.value.teams.length) {
-      throw new Error('A run is active that has teams but no team ID was supplied');
+      throw new Error(
+        'A run is active that has teams but no team ID was supplied'
+      );
     }
     // Error if the team has already finished.
     if (id && timerRep.value.teamFinishTimes[id]) {
@@ -173,16 +182,20 @@ async function stopTimer(id?: string, forfeit?: boolean): Promise<void> {
       delete timerRepCopy.state;
       timerRep.value.teamFinishTimes[id] = {
         ...timerRepCopy,
-        ...{ state: (forfeit) ? 'forfeit' : 'completed' },
+        ...{ state: forfeit ? 'forfeit' : 'completed' },
       };
 
       nodecg.log.debug(
-        `[Timer] Team ${id} finished at ${timerRepCopy.time}${(forfeit) ? ' (forfeit)' : ''}`,
+        `[Timer] Team ${id} finished at ${timerRepCopy.time}${
+          forfeit ? ' (forfeit)' : ''
+        }`
       );
     }
 
     // Stop the timer if all the teams have finished (or no teams exist).
-    const teamsCount = (runDataActiveRun.value) ? runDataActiveRun.value.teams.length : 0;
+    const teamsCount = runDataActiveRun.value
+      ? runDataActiveRun.value.teams.length
+      : 0;
     const teamsFinished = Object.keys(timerRep.value.teamFinishTimes).length;
     if (teamsFinished >= teamsCount) {
       if (timerRep.value.state === 'paused') {
@@ -235,7 +248,10 @@ async function undoTimer(id?: string): Promise<void> {
         timer.undoSplit();
       }
       timerRep.value.state = 'running';
-      if (runDataActiveRun.value && runFinishTimes.value[runDataActiveRun.value.id]) {
+      if (
+        runDataActiveRun.value &&
+        runFinishTimes.value[runDataActiveRun.value.id]
+      ) {
         delete runFinishTimes.value[runDataActiveRun.value.id];
       }
       nodecg.log.debug('[Timer] Undone');
@@ -281,7 +297,7 @@ function tick(): void {
   if (timerRep.value.state === 'running') {
     // Calculates the milliseconds the timer has been running for and updates the replicant.
     const time = timer.currentTime().gameTime() as livesplitCore.TimeSpanRef;
-    const ms = Math.floor((time.totalSeconds()) * 1000);
+    const ms = Math.floor(time.totalSeconds() * 1000);
     setTime(ms);
     timerRep.value.timestamp = Date.now();
   }
@@ -298,9 +314,12 @@ if (timerRep.value.state === 'running') {
   const previousTime = timerRep.value.milliseconds;
   const timeOffset = previousTime + missedTime;
   setTime(timeOffset);
-  nodecg.log.info(`[Timer] Recovered ${(missedTime / 1000).toFixed(2)} seconds of lost time`);
-  startTimer(true)
-    .catch(() => { /* catch error if needed, for safety */ });
+  nodecg.log.info(
+    `[Timer] Recovered ${(missedTime / 1000).toFixed(2)} seconds of lost time`
+  );
+  startTimer(true).catch(() => {
+    /* catch error if needed, for safety */
+  });
 }
 
 // NodeCG messaging system.

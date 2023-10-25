@@ -28,23 +28,13 @@
         <reset-button />
         <!-- Will not show if more than 1 team -->
         <template v-if="teams.length <= 1">
-          <stop-button
-            :info="teams[0]"
-          />
-          <stop-button
-            :info="teams[0]"
-            forfeit
-          />
-          <undo-button
-            :info="teams[0]"
-          />
+          <stop-button :info="teams[0]" />
+          <stop-button :info="teams[0]" forfeit />
+          <undo-button :info="teams[0]" />
         </template>
       </div>
       <!-- Will only show if more than 1 team -->
-      <div
-        v-if="teams.length > 1"
-        :style="{ 'padding-top': '10px' }"
-      >
+      <div v-if="teams.length > 1" :style="{ 'padding-top': '10px' }">
         <team
           v-for="(team, index) in teams"
           :key="team.id"
@@ -53,22 +43,18 @@
         />
       </div>
     </div>
-    <div
-      v-if="disableChanges || tempEnable"
-      :style="{ 'padding-top': '10px' }"
-    >
+    <div v-if="disableChanges || tempEnable" :style="{ 'padding-top': '10px' }">
       <v-btn
         v-if="disableChanges"
         block
-        @click="disableChanges = false; tempEnable = true"
+        @click="
+          disableChanges = false;
+          tempEnable = true;
+        "
       >
         {{ $t('enableChanges') }}
       </v-btn>
-      <v-btn
-        v-if="tempEnable"
-        block
-        @click="disableChanges = true"
-      >
+      <v-btn v-if="tempEnable" block @click="disableChanges = true">
         {{ $t('disableChanges') }}
       </v-btn>
       <div :style="{ 'margin-top': '5px' }">
@@ -108,10 +94,10 @@ import { storeModule } from './store';
   },
 })
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly activeRun!: RunDataActiveRun;
-  @replicantNS.State(
-    (s) => s.reps.timerChangesDisabled,
-  ) readonly timerChangesDisabled!: TimerChangesDisabled;
+  @replicantNS.State((s) => s.reps.runDataActiveRun)
+  readonly activeRun!: RunDataActiveRun;
+  @replicantNS.State((s) => s.reps.timerChangesDisabled)
+  readonly timerChangesDisabled!: TimerChangesDisabled;
   tempEnable = false;
 
   @Watch('disableChanges')
@@ -140,7 +126,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }
@@ -148,19 +134,19 @@ export default class extends Vue {
 </script>
 
 <style scoped>
-  .Disabled {
-    pointer-events: none;
-    opacity: 0.5;
-  }
+.Disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
 
-  #Controls > * {
-    flex: 1;
-  }
-  #Controls > *:not(:first-child) {
-    margin-left: 5px;
-  }
-  #Controls >>> .v-btn {
-    min-width: 0;
-    width: 100%;
-  }
+#Controls > * {
+  flex: 1;
+}
+#Controls > *:not(:first-child) {
+  margin-left: 5px;
+}
+#Controls >>> .v-btn {
+  min-width: 0;
+  width: 100%;
+}
 </style>

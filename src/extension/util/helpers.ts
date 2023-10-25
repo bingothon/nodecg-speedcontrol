@@ -1,5 +1,9 @@
 import type NodeCG from '@alvancamp/test-nodecg-types';
-import { RunData, RunDataArray, SendMessageAck } from '@nodecg-speedcontrol/types';
+import {
+  RunData,
+  RunDataArray,
+  SendMessageAck,
+} from '@nodecg-speedcontrol/types';
 import _ from 'lodash';
 import { get } from './nodecg';
 
@@ -10,9 +14,11 @@ const nodecg = get();
  * @param runData Run Data object.
  */
 export function formPlayerNamesStr(runData: RunData): string {
-  return runData.teams.map((team) => (
-    team.players.map((player) => player.name).join(', ')
-  )).join(' vs. ') || 'N/A';
+  return (
+    runData.teams
+      .map((team) => team.players.map((player) => player.name).join(', '))
+      .join(' vs. ') || 'N/A'
+  );
 }
 
 /**
@@ -20,11 +26,11 @@ export function formPlayerNamesStr(runData: RunData): string {
  * @param runData Run Data object.
  */
 export function getTwitchChannels(runData: RunData): string[] {
-  const channels = runData.teams.map((team) => (
+  const channels = runData.teams.map((team) =>
     team.players
       .filter((player) => !!player.social.twitch)
       .map((player) => player.social.twitch as string)
-  ));
+  );
   return ([] as string[]).concat(...channels);
 }
 
@@ -56,9 +62,9 @@ export function msToTimeStr(ms: number): string {
   const seconds = Math.floor((ms / 1000) % 60);
   const minutes = Math.floor((ms / (1000 * 60)) % 60);
   const hours = Math.floor(ms / (1000 * 60 * 60));
-  return `${padTimeNumber(hours)
-  }:${padTimeNumber(minutes)
-  }:${padTimeNumber(seconds)}`;
+  return `${padTimeNumber(hours)}:${padTimeNumber(minutes)}:${padTimeNumber(
+    seconds
+  )}`;
 }
 
 /**
@@ -91,7 +97,7 @@ export function findRunIndexFromId(id?: string): number {
 export function processAck<T>(
   ack: ReturnType<NodeCG.ListenHandler> | SendMessageAck | undefined,
   err: Error | null,
-  data?: T,
+  data?: T
 ): void {
   if (ack && !ack.handled) {
     ack(err, data);
@@ -127,18 +133,24 @@ export function randomInt(low: number, high: number): number {
  */
 export function checkGameAgainstIgnoreList(
   game: string | null,
-  service: 'horaro' | 'oengus' = 'horaro',
+  service: 'horaro' | 'oengus' = 'horaro'
 ): boolean {
   if (!game) {
     return false;
   }
-  const list = service === 'horaro'
-    ? (nodecg.bundleConfig.horaro || nodecg.bundleConfig.schedule).ignoreGamesWhileImporting || []
-    : nodecg.bundleConfig.oengus.ignoreGamesWhileImporting
-      || (nodecg.bundleConfig.horaro || nodecg.bundleConfig.schedule).ignoreGamesWhileImporting || [];
-  return !!list.find((str) => !!str.toLowerCase().match(
-    new RegExp(`\\b${_.escapeRegExp(game.toLowerCase())}\\b`),
-  ));
+  const list =
+    service === 'horaro'
+      ? (nodecg.bundleConfig.horaro || nodecg.bundleConfig.schedule).ignoreGamesWhileImporting || []
+      : nodecg.bundleConfig.oengus.ignoreGamesWhileImporting ||
+        (nodecg.bundleConfig.horaro || nodecg.bundleConfig.schedule)
+          .ignoreGamesWhileImporting ||
+        [];
+  return !!list.find(
+    (str) =>
+      !!str
+        .toLowerCase()
+        .match(new RegExp(`\\b${_.escapeRegExp(game.toLowerCase())}\\b`))
+  );
 }
 
 /**
@@ -147,7 +159,8 @@ export function checkGameAgainstIgnoreList(
 export function getTwitchUserFromURL(url?: string): string | undefined {
   const sanitised = url?.endsWith('/') ? url.substring(0, url.length - 1) : url;
   return sanitised && sanitised.includes('twitch.tv')
-    ? sanitised.split('/')[sanitised.split('/').length - 1] : undefined;
+    ? sanitised.split('/')[sanitised.split('/').length - 1]
+    : undefined;
 }
 
 /**
@@ -156,5 +169,6 @@ export function getTwitchUserFromURL(url?: string): string | undefined {
 export function getTwitterUserFromURL(url?: string): string | undefined {
   const sanitised = url?.endsWith('/') ? url.substring(0, url.length - 1) : url;
   return sanitised && sanitised.includes('twitter.com')
-    ? sanitised.split('/')[sanitised.split('/').length - 1] : undefined;
+    ? sanitised.split('/')[sanitised.split('/').length - 1]
+    : undefined;
 }

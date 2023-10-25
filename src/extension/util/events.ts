@@ -1,4 +1,8 @@
-import { SendMessageAck, SendMessageArgsMap, SendMessageReturnMap } from '@nodecg-speedcontrol/types';
+import {
+  SendMessageAck,
+  SendMessageArgsMap,
+  SendMessageReturnMap,
+} from '@nodecg-speedcontrol/types';
 import { EventEmitter } from 'events';
 import { get as nodecg } from './nodecg';
 
@@ -34,17 +38,24 @@ function wrapAck(ack: any): any {
  */
 export function sendMessage<K extends keyof SendMessageArgsMap>(
   name: K,
-  data?: SendMessageArgsMap[K],
+  data?: SendMessageArgsMap[K]
 ): Promise<SendMessageReturnMap[K]> {
   return new Promise((resolve, reject) => {
-    nodecg().log.debug(`[Events] sendMessage triggered for "${name}":`, JSON.stringify(data));
-    emitter.emit(name, data, wrapAck((err: Error | null, data_: SendMessageReturnMap[K]) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(data_);
-      }
-    }));
+    nodecg().log.debug(
+      `[Events] sendMessage triggered for "${name}":`,
+      JSON.stringify(data)
+    );
+    emitter.emit(
+      name,
+      data,
+      wrapAck((err: Error | null, data_: SendMessageReturnMap[K]) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data_);
+        }
+      })
+    );
   });
 }
 
@@ -55,7 +66,7 @@ export function sendMessage<K extends keyof SendMessageArgsMap>(
  */
 export function listenFor<K extends keyof SendMessageArgsMap>(
   name: K,
-  callback: (data: SendMessageArgsMap[K], ack: SendMessageAck) => void,
+  callback: (data: SendMessageArgsMap[K], ack: SendMessageAck) => void
 ): void {
   nodecg().log.debug(`[Events] listenFor added for "${name}"`);
   emitter.on(name, (data: SendMessageArgsMap[K], ack: SendMessageAck) => {

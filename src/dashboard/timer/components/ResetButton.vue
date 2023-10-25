@@ -11,16 +11,10 @@
 
 <template>
   <div>
-    <v-tooltip
-      top
-      :disabled="state === 'stopped'"
-    >
+    <v-tooltip top :disabled="state === 'stopped'">
       <template v-slot:activator="{ on }">
         <span v-on="on">
-          <v-btn
-            :disabled="state === 'stopped'"
-            @click="button"
-          >
+          <v-btn :disabled="state === 'stopped'" @click="button">
             <v-icon>mdi-rewind</v-icon>
           </v-btn>
         </span>

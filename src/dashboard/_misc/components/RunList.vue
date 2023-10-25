@@ -9,7 +9,7 @@
     "search": "検索",
     "noTwitchGame": "Twitchゲームカテゴリを設定していない走者情報のみ表示",
     "searchResultCount": "1件の走者情報が見つかりました。 | {count}件の走者情報が見つかりました。"
-  }
+  } 
 }
 </i18n>
 
@@ -65,11 +65,19 @@
 
 <script lang="ts">
 import { Vue, Component, Watch, Prop } from 'vue-property-decorator';
-import { TwitchAPIData, Timer, RunDataArray } from '@nodecg-speedcontrol/types/schemas';
+import {
+  TwitchAPIData,
+  Timer,
+  RunDataArray,
+} from '@nodecg-speedcontrol/types/schemas';
 import { RunData, RunDataActiveRun } from '@nodecg-speedcontrol/types';
 import Draggable from 'vuedraggable';
 import RunPanel from './RunList/RunPanel.vue';
-import { replicantModule, replicantNS, ReplicantTypes } from '../replicant_store';
+import {
+  replicantModule,
+  replicantNS,
+  ReplicantTypes,
+} from '../replicant_store';
 
 @Component({
   components: {
@@ -79,8 +87,10 @@ import { replicantModule, replicantNS, ReplicantTypes } from '../replicant_store
 })
 export default class extends Vue {
   @Prop(Boolean) readonly editor!: boolean;
-  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly activeRun!: RunDataActiveRun;
-  @replicantNS.State((s) => s.reps.twitchAPIData) readonly twitchAPIData!: TwitchAPIData;
+  @replicantNS.State((s) => s.reps.runDataActiveRun)
+  readonly activeRun!: RunDataActiveRun;
+  @replicantNS.State((s) => s.reps.twitchAPIData)
+  readonly twitchAPIData!: TwitchAPIData;
   @replicantNS.State((s) => s.reps.timer) readonly timer!: Timer;
   searchTerm = '';
   hasNoTwitch = false;
@@ -95,11 +105,22 @@ export default class extends Vue {
 
   get filteredRunDataArray(): RunData[] {
     return this.runDataArray.filter((run) => {
-      const str = (this.searchTerm) ? this.searchTerm.toLowerCase() : '';
-      const searchMatch = !str || (str && ((run.game && run.game.toLowerCase().includes(str))
-        || !!run.teams.find((team) => (team.name && team.name.toLowerCase().includes(str))
-        || !!team.players.find((player) => player.name.toLowerCase().includes(str)))));
-      return searchMatch && ((this.hasNoTwitch && !run.gameTwitch) || (!this.hasNoTwitch));
+      const str = this.searchTerm ? this.searchTerm.toLowerCase() : '';
+      const searchMatch =
+        !str ||
+        (str &&
+          ((run.game && run.game.toLowerCase().includes(str)) ||
+            !!run.teams.find(
+              (team) =>
+                (team.name && team.name.toLowerCase().includes(str)) ||
+                !!team.players.find((player) =>
+                  player.name.toLowerCase().includes(str)
+                )
+            )));
+      return (
+        searchMatch &&
+        ((this.hasNoTwitch && !run.gameTwitch) || !this.hasNoTwitch)
+      );
     });
   }
 
@@ -116,7 +137,10 @@ export default class extends Vue {
 
   scroll(val?: RunDataActiveRun): void {
     if (val) {
-      this.$vuetify.goTo(`#run-${val.id}`, { offset: 25, container: '.RunList' });
+      this.$vuetify.goTo(`#run-${val.id}`, {
+        offset: 25,
+        container: '.RunList',
+      });
     } else {
       this.$vuetify.goTo(0, { container: '.RunList' });
     }
@@ -133,14 +157,15 @@ export default class extends Vue {
 </script>
 
 <style scoped>
-  .list-move {
-    transition: transform 0.2s;
-  }
-  .list-enter, .list-leave-to {
-    opacity: 0;
-    transition: transform 0.2s, opacity 0.2s;
-  }
-  .list-leave-active {
-    position: absolute;
-  }
+.list-move {
+  transition: transform 0.2s;
+}
+.list-enter,
+.list-leave-to {
+  opacity: 0;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.list-leave-active {
+  position: absolute;
+}
 </style>

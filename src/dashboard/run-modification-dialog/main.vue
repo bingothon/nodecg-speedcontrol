@@ -22,10 +22,7 @@
     <h1 v-else>
       {{ $t('editRun') }}
     </h1>
-    <v-alert
-      v-if="err"
-      type="error"
-    >
+    <v-alert v-if="err" type="error">
       <!-- Errors are not being localised yet, they are from the server -->
       {{ err.message }}
     </v-alert>
@@ -103,10 +100,7 @@
     </div>
     <div>
       <!-- Teams -->
-      <draggable
-        v-model="runData.teams"
-        handle=".TeamHandle"
-      >
+      <draggable v-model="runData.teams" handle=".TeamHandle">
         <transition-group name="list">
           <team
             v-for="team in runData.teams"
@@ -116,10 +110,7 @@
         </transition-group>
       </draggable>
     </div>
-    <div
-      class="d-flex"
-      :style="{ 'margin-top': '20px' }"
-    >
+    <div class="d-flex" :style="{ 'margin-top': '20px' }">
       <modify-button
         class="mr-auto"
         icon="mdi-account-multiple-plus"
@@ -133,16 +124,10 @@
         hide-details
         :label="$t('updateTwitch')"
       />
-      <v-btn
-        :style="{ 'margin-left': '10px' }"
-        @click="attemptSave"
-      >
+      <v-btn :style="{ 'margin-left': '10px' }" @click="attemptSave">
         {{ $t('ok') }}
       </v-btn>
-      <v-btn
-        :style="{ 'margin-left': '10px' }"
-        @click="close(false)"
-      >
+      <v-btn :style="{ 'margin-left': '10px' }" @click="close(false)">
         {{ $t('cancel') }}
       </v-btn>
     </div>
@@ -152,7 +137,10 @@
 <script lang="ts">
 import { NodeCGAPIClient } from '@alvancamp/test-nodecg-types/client/api/api.client';
 import { Alert, RunData, RunModification } from '@nodecg-speedcontrol/types';
-import { Configschema, TwitchAPIData } from '@nodecg-speedcontrol/types/schemas';
+import {
+  Configschema,
+  TwitchAPIData,
+} from '@nodecg-speedcontrol/types/schemas';
 import clone from 'clone';
 import { DeepWritable } from 'ts-essentials';
 import { Component, Vue } from 'vue-property-decorator';
@@ -173,24 +161,41 @@ import { storeModule } from './store';
   },
 })
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.twitchAPIData) readonly twitchAPIData!: TwitchAPIData;
+  @replicantNS.State((s) => s.reps.twitchAPIData)
+  readonly twitchAPIData!: TwitchAPIData;
   dialog: ReturnType<NodeCGAPIClient['getDialog']>;
   err: Error | null = null;
 
-  get mode(): RunModification.Mode { return storeModule.mode; }
-  set mode(val: RunModification.Mode) { storeModule.updateMode(val); }
+  get mode(): RunModification.Mode {
+    return storeModule.mode;
+  }
+  set mode(val: RunModification.Mode) {
+    storeModule.updateMode(val);
+  }
 
-  get updateTwitch(): boolean { return storeModule.updateTwitchBool; }
-  set updateTwitch(val: boolean) { storeModule.updateTwitch(val); }
+  get updateTwitch(): boolean {
+    return storeModule.updateTwitchBool;
+  }
+  set updateTwitch(val: boolean) {
+    storeModule.updateTwitch(val);
+  }
 
-  get runData(): RunData { return storeModule.runData; }
-  set runData(val: RunData) { storeModule.updateRunData(val); }
+  get runData(): RunData {
+    return storeModule.runData;
+  }
+  set runData(val: RunData) {
+    storeModule.updateRunData(val);
+  }
 
-  addNewTeam(): void { storeModule.addNewTeam(); }
+  addNewTeam(): void {
+    storeModule.addNewTeam();
+  }
 
-  get customData(): { name: string, key: string, ignoreMarkdown?: boolean }[] {
+  get customData(): { name: string; key: string; ignoreMarkdown?: boolean }[] {
     const cfg = nodecg.bundleConfig as DeepWritable<Configschema>; // Doing this for simplicity
-    const customData = clone(cfg.schedule?.customData || cfg.customData?.run || []);
+    const customData = clone(
+      cfg.schedule?.customData || cfg.customData?.run || []
+    );
     Object.keys(this.runData.customData).forEach((key) => {
       if (!customData.find(({ key: k }) => k === key)) {
         customData.push({ name: `(?) ${key}`, key });
@@ -199,30 +204,41 @@ export default class extends Vue {
     return customData;
   }
 
-  open(opts: { mode: RunModification.Mode, runData?: RunData, prevID?: string }): void {
+  open(opts: {
+    mode: RunModification.Mode;
+    runData?: RunData;
+    prevID?: string;
+  }): void {
     // Waits for dialog to actually open before changing storage.
     this.dialog?.open();
-    document.addEventListener('dialog-opened', () => {
-      this.mode = opts.mode;
-      this.err = null;
-      if (opts.runData) {
-        storeModule.updateRunData(opts.runData);
-        if (opts.mode === 'Duplicate') {
-          storeModule.setAsDuplicate();
+    document.addEventListener(
+      'dialog-opened',
+      () => {
+        this.mode = opts.mode;
+        this.err = null;
+        if (opts.runData) {
+          storeModule.updateRunData(opts.runData);
+          if (opts.mode === 'Duplicate') {
+            storeModule.setAsDuplicate();
+          }
+        } else if (opts.mode === 'New') {
+          storeModule.setPreviousRunID(opts.prevID);
+          storeModule.resetRunData();
+          storeModule.addNewTeam();
         }
-      } else if (opts.mode === 'New') {
-        storeModule.setPreviousRunID(opts.prevID);
-        storeModule.resetRunData();
-        storeModule.addNewTeam();
-      }
-    }, { once: true });
+      },
+      { once: true }
+    );
     document.addEventListener('dialog-confirmed', this.confirm, { once: true });
     document.addEventListener('dialog-dismissed', this.dismiss, { once: true });
   }
 
   updateRunDataProp(key: string, val: string | boolean): void {
     if (key.startsWith('customData.')) {
-      const newVal = { ...this.runData.customData, [key.replace('customData.', '')]: val };
+      const newVal = {
+        ...this.runData.customData,
+        [key.replace('customData.', '')]: val,
+      };
       storeModule.updateRunDataProp({ key: 'customData', val: newVal });
     } else {
       storeModule.updateRunDataProp({ key, val });
@@ -262,30 +278,35 @@ export default class extends Vue {
     this.dialog = nodecg.getDialog('run-modification-dialog');
 
     // Attaching this function to the window for easy access from dashboard panels.
-    (window as Window as RunModification.Dialog).openDialog = (
-      opts: { mode: RunModification.Mode, runData?: RunData, prevID?: string },
-    ): void => this.open(opts);
+    (window as Window as RunModification.Dialog).openDialog = (opts: {
+      mode: RunModification.Mode;
+      runData?: RunData;
+      prevID?: string;
+    }): void => this.open(opts);
 
     // Small hack to make the NodeCG dialog look a little better for us, not perfect yet.
-    const elem = this.dialog?.getElementsByTagName('paper-dialog-scrollable')[0] as HTMLElement;
+    const elem = this.dialog?.getElementsByTagName(
+      'paper-dialog-scrollable'
+    )[0] as HTMLElement;
     elem.style.marginBottom = '12px';
   }
 }
 </script>
 
 <style scoped>
-  h1 {
-    margin-bottom: 10px;
-  }
+h1 {
+  margin-bottom: 10px;
+}
 
-  .list-move {
-    transition: transform 0.2s;
-  }
-  .list-enter, .list-leave-to {
-    opacity: 0;
-    transition: transform 0.2s, opacity 0.2s;
-  }
-  .list-leave-active {
-    position: absolute;
-  }
+.list-move {
+  transition: transform 0.2s;
+}
+.list-enter,
+.list-leave-to {
+  opacity: 0;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.list-leave-active {
+  position: absolute;
+}
 </style>

@@ -51,13 +51,14 @@ import Team from './components/Team.vue';
   },
 })
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly runDataActiveRun!: RunDataActiveRun;
+  @replicantNS.State((s) => s.reps.runDataActiveRun)
+  readonly runDataActiveRun!: RunDataActiveRun;
 
   mounted(): void {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }
