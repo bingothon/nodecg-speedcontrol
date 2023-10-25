@@ -143,15 +143,13 @@ function isOengusSchedule(source: any): source is OengusSchedule {
  * @param useJapanese If you want to use usernameJapanese from the user data.
  */
 async function importOengusPlayers(
+  marathonResp: any,
+  scheduleResp: any,
   marathonShort: string,
   useJapanese: boolean
 ) {
   try {
     oengusImportStatus.value.importing = true;
-    const marathonResp = await get(`/marathons/${marathonShort}`);
-    const scheduleResp = await get(
-      `/marathons/${marathonShort}/schedule?withCustomData=true`
-    );
     if (!isOengusMarathon(marathonResp.body)) {
       throw new Error('Did not receive marathon data correctly');
     }
@@ -297,7 +295,16 @@ async function importSchedule(
     const runItems = data.schedule.items;
     const setupTime = data.schedule.setup_t;
     defaultSetupTime.value = setupTime;
-
+    const marathonResp = await get(`/marathons/${oengusShort}`);
+    const scheduleResp = await get(
+      `/marathons/${oengusShort}/schedule?withCustomData=true`
+    );
+    const allOengusPlayers = await importOengusPlayers(
+      marathonResp,
+      scheduleResp,
+      oengusShort,
+      useJPOengusNames
+    );
     // Sanitizing import option inputs with this "mess".
     const opts: ImportOptionsSanitized = {
       columns: {
@@ -431,11 +438,6 @@ async function importSchedule(
             runData.customData[col] = str;
           }
         });
-
-        const allOengusPlayers = await importOengusPlayers(
-          oengusShort,
-          useJPOengusNames
-        );
 
         // Players
         const playerList = run.data[opts.columns.player];
