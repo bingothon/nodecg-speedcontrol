@@ -181,26 +181,43 @@ async function refreshChannelInfo(): Promise<void> {
  */
 async function searchForGame(
   query: string
-): Promise<{ id: string; name: string }> {
+): Promise<{ id: string; name: string; gameImage: string }> {
   if (twitchAPIData.value.state !== 'on') {
     throw new Error('Integration not ready');
   }
+
   const resp = await request(
     'get',
     `/search/categories?query=${encodeURIComponent(query)}`,
     null,
     true
   );
+
   if (resp.statusCode !== 200) {
     throw new Error(JSON.stringify(resp.body));
   } else if (!resp.body.data || !resp.body.data.length) {
     throw new Error(`No game matches for "${query}"`);
   }
-  const results = resp.body.data as { id: string; name: string }[];
+  nodecg.log.info(JSON.stringify(resp.body.data));
+
+  // Update the type to include gameImage
+  const results = resp.body.data as {
+    id: string;
+    name: string;
+    box_art_url: string;
+  }[];
   const exact = results.find(
     (game) => game.name.toLowerCase() === query.toLowerCase()
   );
-  return exact || results[0];
+
+  // If an exact match is found or the first result is to be returned,
+  // Include the game image in the result.
+  const gameToReturn = exact || results[0];
+  return {
+    id: gameToReturn.id,
+    name: gameToReturn.name,
+    gameImage: gameToReturn.box_art_url, // assuming this is the field name from the API
+  };
 }
 
 /**
@@ -210,7 +227,7 @@ async function searchForGame(
  */
 export async function verifyTwitchDir(
   query: string
-): Promise<{ id: string; name: string } | undefined> {
+): Promise<{ id: string; name: string; gameImage: string } | undefined> {
   const [, game] = await to(searchForGame(query));
   return game;
 }

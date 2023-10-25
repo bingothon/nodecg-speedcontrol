@@ -369,6 +369,7 @@ async function importSchedule(
         // Attempts to find the correct Twitch game directory.
         const game = parseMarkdown(run.data[opts.columns.game]);
         let gameTwitch = parseMarkdown(run.data[opts.columns.gameTwitch]).str;
+
         // TODO: Don't even try to look up Twitch directory if we can't verify it!
         let srcomGameTwitch;
         if (
@@ -386,14 +387,18 @@ async function importSchedule(
           }
         }
         // Verify some game directory supplied exists on Twitch.
+        let gameImage = 'undefined';
         for (const str of [gameTwitch, srcomGameTwitch, game.str]) {
           if (str) {
-            gameTwitch = (await to(verifyTwitchDir(str)))[1]?.name;
+            const twitchDirectoryResult = await to(verifyTwitchDir(str));
+            gameTwitch = twitchDirectoryResult[1]?.name;
+            gameImage = twitchDirectoryResult[1]?.gameImage || 'undefined';
             if (gameTwitch) {
               break; // If a directory was successfully found, stop loop early.
             }
           }
         }
+        runData.customData.GameImage = gameImage;
         runData.gameTwitch = gameTwitch;
 
         // Scheduled Date/Time
