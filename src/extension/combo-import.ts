@@ -387,19 +387,19 @@ async function importSchedule(
           }
         }
         // Verify some game directory supplied exists on Twitch.
-        let gameImage = 'undefined';
+        let gameCover = 'undefined';
         for (const str of [gameTwitch, srcomGameTwitch, game.str]) {
           if (str) {
             const twitchDirectoryResult = await to(verifyTwitchDir(str));
             gameTwitch = twitchDirectoryResult[1]?.name;
-            gameImage = twitchDirectoryResult[1]?.gameImage || 'undefined';
+            gameCover = twitchDirectoryResult[1]?.gameCover || 'undefined';
             if (gameTwitch) {
               break; // If a directory was successfully found, stop loop early.
             }
           }
         }
         // eslint-disable-next-line @typescript-eslint/dot-notation
-        runData.customData['gameimage'] = gameImage;
+        runData.customData['gameCover'] = gameCover;
         runData.gameTwitch = gameTwitch;
 
         // Scheduled Date/Time

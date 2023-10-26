@@ -181,7 +181,7 @@ async function refreshChannelInfo(): Promise<void> {
  */
 async function searchForGame(
   query: string
-): Promise<{ id: string; name: string; gameImage: string }> {
+): Promise<{ id: string; name: string; gameCover: string }> {
   if (twitchAPIData.value.state !== 'on') {
     throw new Error('Integration not ready');
   }
@@ -199,7 +199,7 @@ async function searchForGame(
     throw new Error(`No game matches for "${query}"`);
   }
 
-  // Update the type to include gameImage
+  // Update the type to include gameCover
   const results = resp.body.data as {
     id: string;
     name: string;
@@ -215,7 +215,7 @@ async function searchForGame(
   return {
     id: gameToReturn.id,
     name: gameToReturn.name,
-    gameImage: gameToReturn.box_art_url, // assuming this is the field name from the API
+    gameCover: gameToReturn.box_art_url, // assuming this is the field name from the API
   };
 }
 
@@ -226,7 +226,7 @@ async function searchForGame(
  */
 export async function verifyTwitchDir(
   query: string
-): Promise<{ id: string; name: string; gameImage: string } | undefined> {
+): Promise<{ id: string; name: string; gameCover: string } | undefined> {
   const [, game] = await to(searchForGame(query));
   return game;
 }
