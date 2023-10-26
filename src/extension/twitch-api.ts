@@ -198,7 +198,6 @@ async function searchForGame(
   } else if (!resp.body.data || !resp.body.data.length) {
     throw new Error(`No game matches for "${query}"`);
   }
-  nodecg.log.info(JSON.stringify(resp.body.data));
 
   // Update the type to include gameImage
   const results = resp.body.data as {

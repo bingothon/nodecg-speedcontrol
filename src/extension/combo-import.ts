@@ -398,7 +398,8 @@ async function importSchedule(
             }
           }
         }
-        runData.customData.GameImage = gameImage;
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        runData.customData['gameimage'] = gameImage;
         runData.gameTwitch = gameTwitch;
 
         // Scheduled Date/Time
