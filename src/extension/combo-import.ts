@@ -143,8 +143,8 @@ function isOengusSchedule(source: any): source is OengusSchedule {
  * @param useJapanese If you want to use usernameJapanese from the user data.
  */
 async function importOengusPlayers(
-  marathonResp: any,
-  scheduleResp: any,
+  marathonResp: NeedleResponse,
+  scheduleResp: NeedleResponse,
   marathonShort: string,
   useJapanese: boolean
 ) {
