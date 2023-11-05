@@ -78,11 +78,13 @@ export async function refreshToken(): Promise<void> {
     nodecg.log.info('[Twitch] Successfully refreshed access token');
     twitchAPIData.value.accessToken = resp.body.access_token;
     twitchAPIData.value.refreshToken = resp.body.refresh_token;
+    twitchAPIData.value.tokenExpiresAt = Date.now() + resp.body.expires_in * 1000;
   } catch (err) {
     nodecg.log.warn(
       '[Twitch] Error refreshing access token, you need to relogin'
     );
     nodecg.log.debug('[Twitch] Error refreshing access token:', err);
+    twitchAPIData.value.tokenExpiresAt = 0;
     await to(logout());
     throw err;
   }
@@ -406,15 +408,15 @@ async function startCommercial(
  */
 async function setUp(): Promise<void> {
   let userResp: NeedleResponse | undefined;
+  let [err, resp] = await to(validateToken());
+  if (err) {
+    await refreshToken();
+    [err, resp] = await to(validateToken());
+  }
+  if (!resp) {
+    throw new Error('No response while validating token');
+  }
   if (!config.twitch.channelName) {
-    let [err, resp] = await to(validateToken());
-    if (err) {
-      await refreshToken();
-      [err, resp] = await to(validateToken());
-    }
-    if (!resp) {
-      throw new Error('No response while validating token');
-    }
     twitchAPIData.value.channelID = resp.user_id;
     twitchAPIData.value.channelName = resp.login;
     userResp = await request('get', `/users?id=${resp.user_id}`, null, true);
@@ -479,6 +481,7 @@ if (config.twitch.enabled) {
       .then((resp) => {
         twitchAPIData.value.accessToken = resp.body.access_token;
         twitchAPIData.value.refreshToken = resp.body.refresh_token;
+        twitchAPIData.value.tokenExpiresAt = Date.now() + resp.body.expires_in * 1000;
         setUp()
           .then(() => {
             nodecg.log.info('[Twitch] Authentication successful');
@@ -501,6 +504,26 @@ if (config.twitch.enabled) {
   });
 
   nodecg.mount('/nodecg-speedcontrol', router);
+}
+
+/**
+ * Checks if the current access token is still valid, if yes returns it.
+ * Otherwise tries to refresh the token 
+ */
+async function getOrRefreshAccessToken(): Promise<string> {
+  if (twitchAPIData.value.state !== 'on') {
+    throw new Error("API state not 'on'");
+  }
+  let [err, resp] = await to(validateToken());
+  if (err) {
+    await refreshToken();
+    [err, resp] = await to(validateToken());
+  }
+  if (!resp) {
+    throw new Error('No response while validating token');
+  }
+  nodecg.log.info('[Twitch] delivering access token!');
+  return twitchAPIData.value.accessToken || '';
 }
 
 // NodeCG messaging system.
@@ -547,6 +570,12 @@ nodecg.listenFor('twitchClipDurationRequest', (data, ack) => {
     .catch((err) => {
       processAck(ack, err);
     });
+});
+
+nodecg.listenFor('twitchRefreshAccessToken', (data, ack) => {
+  getOrRefreshAccessToken()
+    .then((resp) => processAck(ack, null, resp))
+    .catch((err) => processAck(ack, err));
 });
 
 // Our messaging system.

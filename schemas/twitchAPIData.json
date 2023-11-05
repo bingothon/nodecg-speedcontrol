@@ -22,6 +22,9 @@
     "refreshToken": {
       "type": "string"
     },
+    "tokenExpiresAt": {
+      "type": "number"
+    },
     "channelName": {
       "type": "string"
     },
