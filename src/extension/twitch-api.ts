@@ -530,8 +530,23 @@ nodecg.listenFor('twitchStartCommercialTimer', (data, ack) => {
 });
 nodecg.listenFor('twitchAPIRequest', (data, ack) => {
   request(data.method, data.endpoint, data.data, data.newAPI)
-    .then((resp) => processAck(ack, null, resp))
-    .catch((err) => processAck(ack, err));
+    .then((resp) => {
+      processAck(ack, null, resp);
+    })
+    .catch((err) => {
+      processAck(ack, err);
+    });
+});
+
+// Fuck it i will make a seperate twitchClipDurationRequest
+nodecg.listenFor('twitchClipDurationRequest', (data, ack) => {
+  request(data.method, data.endpoint, data.data, data.newAPI)
+    .then((resp) => {
+      processAck(ack, null, resp.body.data[0].duration.toString());
+    })
+    .catch((err) => {
+      processAck(ack, err);
+    });
 });
 
 // Our messaging system.
