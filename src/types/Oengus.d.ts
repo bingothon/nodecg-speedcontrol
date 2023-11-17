@@ -37,7 +37,7 @@ export enum OengusRunType {
 export interface OengusUser {
   id: number;
   username: string;
-  usernameJapanese: string | null;
+  displayName: string;
   enabled: boolean;
   twitterName?: string | null; // deprecated
   twitchName?: string | null; // deprecated

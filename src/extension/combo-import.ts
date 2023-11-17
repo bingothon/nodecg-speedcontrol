@@ -140,8 +140,8 @@ async function importOengusPlayers(marathonShort: string, useJapanese: boolean) 
 					? runner.pronouns.split(',')
 					: runner.pronouns;
 				const player = {
-					name: (useJapanese && runner.usernameJapanese)
-						? runner.usernameJapanese : runner.username,
+					name: runner.username,
+					displayName: runner.displayName,
 					social: {
 						twitch: playerTwitch || undefined,
 					},
@@ -404,9 +404,10 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 							async (rawPlayer) => {
 								const {str, url} = parseMarkdown(rawPlayer);
 								const twitchUsername = getTwitchUserFromURL(url);
-								const oengusPlayer = allOengusPlayers.find((player) => player.name === str);
+								let oengusPlayer = allOengusPlayers.find((player) => player.name === str);
+								if (!oengusPlayer) oengusPlayer = allOengusPlayers.find((player => player.displayName === str));
 								const player: RunDataPlayer = {
-									name: str || '',
+									name: oengusPlayer?.displayName || str || '',
 									id: uuid(),
 									teamID: team.id,
 									social: {

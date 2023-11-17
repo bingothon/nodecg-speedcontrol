@@ -186,8 +186,8 @@ async function importSchedule(marathonShort: string, useJapanese: boolean): Prom
           ? runner.pronouns.split(',')
           : runner.pronouns;
         const player: RunDataPlayer = {
-          name: (useJapanese && runner.usernameJapanese)
-            ? runner.usernameJapanese : runner.username,
+          name: (useJapanese && runner.displayName)
+            ? runner.displayName : runner.username,
           id: uuid(),
           teamID: team.id,
           social: {
