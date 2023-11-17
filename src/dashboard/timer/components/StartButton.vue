@@ -15,22 +15,12 @@
 
 <template>
   <div>
-    <v-tooltip
-      top
-      :disabled="state === 'finished'"
-    >
+    <v-tooltip top :disabled="state === 'finished'">
       <template v-slot:activator="{ on }">
         <span v-on="on">
-          <v-btn
-            :disabled="state === 'finished'"
-            @click="button"
-          >
-            <v-icon v-if="state === 'running'">
-              mdi-pause
-            </v-icon>
-            <v-icon v-else>
-              mdi-play
-            </v-icon>
+          <v-btn :disabled="state === 'finished'" @click="button">
+            <v-icon v-if="state === 'running'"> mdi-pause </v-icon>
+            <v-icon v-else> mdi-play </v-icon>
           </v-btn>
         </span>
       </template>

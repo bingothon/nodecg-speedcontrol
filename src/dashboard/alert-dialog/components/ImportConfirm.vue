@@ -15,9 +15,9 @@
   <div>
     <div>
       {{ $t('alertText') }}
-      <br><br>{{ $t('alertText2') }}
+      <br /><br />{{ $t('alertText2') }}
     </div>
-    <br>
+    <br />
     <div :style="{ float: 'right' }">
       <v-btn @click="$emit('confirm')">
         {{ $t('ok') }}

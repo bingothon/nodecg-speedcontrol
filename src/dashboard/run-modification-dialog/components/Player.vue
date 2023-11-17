@@ -19,9 +19,7 @@
 
 <template>
   <div class="Player d-flex align-center">
-    <v-icon class="PlayerHandle">
-      mdi-drag-vertical
-    </v-icon>
+    <v-icon class="PlayerHandle"> mdi-drag-vertical </v-icon>
     <text-input
       :value="playerData.name"
       @input="updatePlayerDataProp('name', $event)"
@@ -82,24 +80,30 @@ export default class extends Vue {
   updatePlayerDataProp(key: string, val: string): void {
     if (key.split('.').length > 1) {
       const newVal = {
-        ...(this.playerData)[key.split('.')[0] as 'customData' | 'social'],
+        ...this.playerData[key.split('.')[0] as 'customData' | 'social'],
         [key.replace(`${key.split('.')[0]}.`, '')]: val,
       };
       storeModule.updatePlayerDataProp({
-        teamId: this.playerData.teamID, id: this.playerData.id, key: key.split('.')[0], val: newVal,
+        teamId: this.playerData.teamID,
+        id: this.playerData.id,
+        key: key.split('.')[0],
+        val: newVal,
       });
     } else {
       storeModule.updatePlayerDataProp({
-        teamId: this.playerData.teamID, id: this.playerData.id, key, val,
+        teamId: this.playerData.teamID,
+        id: this.playerData.id,
+        key,
+        val,
       });
     }
   }
 
-  removePlayer({ teamID, id }: { teamID: string, id: string }): void {
+  removePlayer({ teamID, id }: { teamID: string; id: string }): void {
     storeModule.removePlayer({ teamID, id });
   }
 
-  get customData(): DeepReadonly<{ name: string, key: string }[]> {
+  get customData(): DeepReadonly<{ name: string; key: string }[]> {
     return nodecg.bundleConfig.customData?.player || [];
   }
 }

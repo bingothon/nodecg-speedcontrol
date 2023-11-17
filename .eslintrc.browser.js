@@ -16,9 +16,7 @@ module.exports = {
     nodecg: 'readonly',
     NodeCG: 'readonly',
   },
-  plugins: [
-    '@typescript-eslint',
-  ],
+  plugins: ['@typescript-eslint'],
   extends: [
     'plugin:vue/essential',
     'airbnb-base',
@@ -44,25 +42,63 @@ module.exports = {
     'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
     // max-len set to ignore "import" lines (as they usually get long and messy).
     // Also includes pattern for i18n JSON.
-    'max-len': ['error', { code: 100, ignorePattern: '^import\\s.+\\sfrom\\s.+;|"(.*?)": "(.*?)"' }],
+    'max-len': [
+      'error',
+      {
+        code: 100,
+        ignorePattern: '^import\\s.+\\sfrom\\s.+;|"(.*?)": "(.*?)"',
+      },
+    ],
     // I mainly have this off as it ruins auto import sorting in VSCode.
     'object-curly-newline': 'off',
     '@typescript-eslint/lines-between-class-members': 'off',
     'vue/html-self-closing': ['error'],
     'class-methods-use-this': 'off',
-    'no-param-reassign': ['error', {
-      props: true,
-      ignorePropertyModificationsFor: [
-        'state', // for vuex state
-        'acc', // for reduce accumulators
-        'e', // for e.returnvalue
-      ],
-    }],
-    'import/extensions': ['error', 'ignorePackages', {
-      js: 'never',
-      jsx: 'never',
-      ts: 'never',
-      tsx: 'never',
-    }],
-  }
+    'comma-dangle': [
+      'error',
+      {
+        arrays: 'always-multiline',
+        objects: 'always-multiline',
+        imports: 'always-multiline',
+        exports: 'always-multiline',
+        functions: 'never',
+      },
+    ],
+    '@typescript-eslint/comma-dangle': [
+      'error',
+      {
+        arrays: 'always-multiline',
+        objects: 'always-multiline',
+        imports: 'always-multiline',
+        exports: 'always-multiline',
+        functions: 'never',
+      },
+    ],
+    'operator-linebreak': 'off',
+    'max-len': '[error, { code: 100, ignorePattern: "^import\\s.+\\sfrom\\s.+;" } ]',
+    'implicit-arrow-linebreak': 'off',
+    'function-paren-newline': 'off',
+    'vue/html-self-closing': 'off',
+    'no-param-reassign': [
+      'error',
+      {
+        props: true,
+        ignorePropertyModificationsFor: [
+          'state', // for vuex state
+          'acc', // for reduce accumulators
+          'e', // for e.returnvalue
+        ],
+      },
+    ],
+    'import/extensions': [
+      'error',
+      'ignorePackages',
+      {
+        js: 'never',
+        jsx: 'never',
+        ts: 'never',
+        tsx: 'never',
+      },
+    ],
+  },
 };

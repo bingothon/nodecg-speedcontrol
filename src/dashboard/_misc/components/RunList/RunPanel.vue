@@ -15,22 +15,23 @@
 
 <template>
   <v-expansion-panel
-    :class="{ 'grey darken-2': !editor && activeRun && activeRun.id === runData.id }"
+    :class="{
+      'grey darken-2': !editor && activeRun && activeRun.id === runData.id,
+    }"
     :style="{ 'overflow-x': 'hidden' }"
   >
     <v-expansion-panel-header>
       <span>
-        <v-icon
-          v-if="!moveDisabled"
-          class="Handle"
-          :style="{ cursor: 'move' }"
-        >
+        <v-icon v-if="!moveDisabled" class="Handle" :style="{ cursor: 'move' }">
           mdi-drag-vertical
         </v-icon>
         {{ runData.game }}
       </span>
     </v-expansion-panel-header>
-    <v-expansion-panel-content class="body-2" :style="{ 'overflow-wrap': 'break-word' }">
+    <v-expansion-panel-content
+      class="body-2"
+      :style="{ 'overflow-wrap': 'break-word' }"
+    >
       <div v-if="playerStr">
         <span class="font-weight-bold">{{ $t('players') }}:</span>
         <span>{{ playerStr }}</span>
@@ -63,10 +64,7 @@
         <span class="font-weight-bold">{{ $t('finalTime') }}:</span>
         <span>{{ runFinishTime.time }}</span>
       </div>
-      <div
-        v-for="(val, key) in runData.customData"
-        :key="key"
-      >
+      <div v-for="(val, key) in runData.customData" :key="key">
         <span class="font-weight-bold">{{ customDataName(key) }}:</span>
         <span>{{ val }}</span>
       </div>
@@ -109,7 +107,12 @@
 </template>
 
 <script lang="ts">
-import { Alert, RunData, RunDataActiveRun, RunModification } from '@nodecg-speedcontrol/types';
+import {
+  Alert,
+  RunData,
+  RunDataActiveRun,
+  RunModification,
+} from '@nodecg-speedcontrol/types';
 import { RunFinishTimes, Timer } from '@nodecg-speedcontrol/types/schemas';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import { getDialog } from '../../helpers';
@@ -126,33 +129,43 @@ export default class extends Vue {
   @Prop(Boolean) readonly editor!: boolean;
   @Prop(Boolean) readonly disableChange!: boolean;
   @Prop(Boolean) readonly moveDisabled!: boolean;
-  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly activeRun!: RunDataActiveRun;
-  @replicantNS.State((s) => s.reps.runFinishTimes) readonly runFinishTimes!: RunFinishTimes;
+  @replicantNS.State((s) => s.reps.runDataActiveRun)
+  readonly activeRun!: RunDataActiveRun;
+  @replicantNS.State((s) => s.reps.runFinishTimes)
+  readonly runFinishTimes!: RunFinishTimes;
 
   get playerStr(): string {
-    return this.runData.teams.map((team) => (
-      `${team.name ? `${team.name}:` : ''}
-      ${team.players.map((player) => (
-        player.pronouns ? `${player.name} [${player.pronouns}]` : player.name
-      )).join(', ')}`
-    )).join(' vs. ');
+    return this.runData.teams
+      .map(
+        (team) =>
+          `${team.name ? `${team.name}:` : ''}
+      ${team.players
+        .map((player) =>
+          player.pronouns ? `${player.name} [${player.pronouns}]` : player.name
+        )
+        .join(', ')}`
+      )
+      .join(' vs. ');
   }
 
   get runFinishTime(): Timer | undefined {
     return this.runFinishTimes[this.runData.id];
   }
 
-  customDataName(key: string): string {
+  customDataName(key: string | number): string {
     const cfg = nodecg.bundleConfig;
     const customData = cfg.schedule?.customData || cfg.customData?.run || [];
-    return customData.find(
-      (custom) => custom.key === key,
-    )?.name || `? (${key})`;
+    return (
+      customData.find((custom) => custom.key === key)?.name || `? (${key})`
+    );
   }
 
   async playRun(): Promise<void> {
     try {
-      const noTwitchGame = await nodecg.sendMessage('changeActiveRun', this.runData.id); // TYPE!
+      const noTwitchGame = await nodecg.sendMessage(
+        'changeActiveRun',
+        this.runData.id
+      ); // TYPE!
       if (noTwitchGame) {
         const dialog = getDialog('alert-dialog') as Alert.Dialog;
         if (dialog) {
@@ -165,7 +178,9 @@ export default class extends Vue {
   }
 
   duplicateRun(): void {
-    const dialog = getDialog('run-modification-dialog') as RunModification.Dialog;
+    const dialog = getDialog(
+      'run-modification-dialog'
+    ) as RunModification.Dialog;
     if (dialog) {
       dialog.openDialog({
         mode: 'Duplicate',
@@ -175,7 +190,9 @@ export default class extends Vue {
   }
 
   addNewRunAfter(): void {
-    const dialog = getDialog('run-modification-dialog') as RunModification.Dialog;
+    const dialog = getDialog(
+      'run-modification-dialog'
+    ) as RunModification.Dialog;
     if (dialog) {
       dialog.openDialog({
         mode: 'New',
@@ -185,7 +202,9 @@ export default class extends Vue {
   }
 
   editRun(): void {
-    const dialog = getDialog('run-modification-dialog') as RunModification.Dialog;
+    const dialog = getDialog(
+      'run-modification-dialog'
+    ) as RunModification.Dialog;
     if (dialog) {
       dialog.openDialog({
         mode: 'EditOther',

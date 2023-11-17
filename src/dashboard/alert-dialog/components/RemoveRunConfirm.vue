@@ -23,7 +23,7 @@
         {{ runStr }}
       </div>
     </div>
-    <br>
+    <br />
     <div :style="{ float: 'right' }">
       <v-btn @click="$emit('confirm')">
         {{ $t('ok') }}
@@ -41,11 +41,15 @@ import { RunData } from '@nodecg-speedcontrol/types';
 
 @Component
 export default class extends Vue {
-  @Prop({ type: Object, required: true }) readonly alertData!: { runData?: RunData };
+  @Prop({ type: Object, required: true }) readonly alertData!: {
+    runData?: RunData;
+  };
 
   get runStr(): string | undefined {
-    if (this.alertData.runData
-      && (this.alertData.runData.game || this.alertData.runData.category)) {
+    if (
+      this.alertData.runData &&
+      (this.alertData.runData.game || this.alertData.runData.category)
+    ) {
       const arr = [
         this.alertData.runData.game || '?',
         this.alertData.runData.category,

@@ -36,11 +36,7 @@
     <template v-if="option.key === 'externalID'">
       <v-tooltip left>
         <template v-slot:activator="{ on }">
-          <v-icon
-            small
-            :style="{ 'padding-left': '2px' }"
-            v-on="on"
-          >
+          <v-icon small :style="{ 'padding-left': '2px' }" v-on="on">
             mdi-help-circle-outline
           </v-icon>
         </template>
@@ -63,10 +59,11 @@ export default class extends Vue {
       key: 'game',
       custom: false,
     },
-  }) readonly option!: { name: string, key: string, custom: boolean };
+  })
+  readonly option!: { name: string; key: string; custom: boolean };
   @Prop({ type: Array, required: true }) readonly columns!: string[];
 
-  get dropdownOpts(): { value: number, text: string }[] {
+  get dropdownOpts(): { value: number; text: string }[] {
     return [
       {
         value: -1,
@@ -76,7 +73,7 @@ export default class extends Vue {
       this.columns.map((value, index) => ({
         value: index,
         text: value,
-      })),
+      }))
     );
   }
 
@@ -84,7 +81,9 @@ export default class extends Vue {
     if (this.option.custom) {
       return storeModule.opts.columns.custom[this.option.key];
     }
-    return (storeModule.opts.columns as unknown as { [k: string]: number | null })[this.option.key];
+    return (
+      storeModule.opts.columns as unknown as { [k: string]: number | null }
+    )[this.option.key];
   }
   set selected(value: number | null) {
     storeModule.updateColumn({

@@ -1,4 +1,12 @@
-import { HoraroSchedule, ImportOptions, ImportOptionsSanitized, ParsedMarkdown, RunData, RunDataPlayer, RunDataTeam } from '@nodecg-speedcontrol/types'; // eslint-disable-line object-curly-newline, max-len
+import {
+  HoraroSchedule,
+  ImportOptions,
+  ImportOptionsSanitized,
+  ParsedMarkdown,
+  RunData,
+  RunDataPlayer,
+  RunDataTeam,
+} from '@nodecg-speedcontrol/types'; // eslint-disable-line object-curly-newline, max-len
 import crypto from 'crypto';
 import MarkdownIt from 'markdown-it';
 import needle from 'needle';
@@ -8,9 +16,19 @@ import removeMd from 'remove-markdown';
 import { v4 as uuid } from 'uuid';
 import { searchForTwitchGame, searchForUserDataMultiple } from './srcom-api';
 import { verifyTwitchDir } from './twitch-api';
-import { checkGameAgainstIgnoreList, getTwitchUserFromURL, msToTimeStr, processAck, to } from './util/helpers'; // eslint-disable-line object-curly-newline, max-len
+import {
+  checkGameAgainstIgnoreList,
+  getTwitchUserFromURL,
+  msToTimeStr,
+  processAck,
+  to,
+} from './util/helpers'; // eslint-disable-line object-curly-newline, max-len
 import { get } from './util/nodecg';
-import { defaultSetupTime, horaroImportStatus, runDataArray } from './util/replicants';
+import {
+  defaultSetupTime,
+  horaroImportStatus,
+  runDataArray,
+} from './util/replicants';
 
 const nodecg = get();
 const config = nodecg.bundleConfig;
@@ -31,12 +49,15 @@ function parseMarkdown(str?: string | null): ParsedMarkdown {
       const res = md.parseInline(str, {});
       let url;
       if (res[0] && res[0].children) {
-        url = res[0].children.find((child) => (
-          child.type === 'link_open' && child.attrs
-          && child.attrs[0] && child.attrs[0][0] === 'href'
-        ));
+        url = res[0].children.find(
+          (child) =>
+            child.type === 'link_open' &&
+            child.attrs &&
+            child.attrs[0] &&
+            child.attrs[0][0] === 'href'
+        );
       }
-      results.url = (url && url.attrs) ? url.attrs[0][1] : undefined;
+      results.url = url && url.attrs ? url.attrs[0][1] : undefined;
       results.str = removeMd(str);
     } catch (err) {
       // return nothing
@@ -68,12 +89,18 @@ function resetImportStatus(): void {
  * @param url URL of Horaro schedule.
  * @param dashID UUID of dashboard element, generated on panel load and passed here.
  */
-async function loadSchedule(url: string, dashID: string): Promise<HoraroSchedule> {
+async function loadSchedule(
+  url: string,
+  dashID: string
+): Promise<HoraroSchedule> {
   try {
     let jsonURL = `${url}.json`;
-    if (url.match((/\?key=/))) { // If schedule URL has a key in it, extract it correctly.
+    if (url.match(/\?key=/)) {
+      // If schedule URL has a key in it, extract it correctly.
       const urlMatch = (url.match(/(.*?)(?=(\?key=))/) as RegExpMatchArray)[0];
-      const keyMatch = (url.match(/(?<=(\?key=))(.*?)$/) as RegExpMatchArray)[0];
+      const keyMatch = (
+        url.match(/(?<=(\?key=))(.*?)$/) as RegExpMatchArray
+      )[0];
       jsonURL = `${urlMatch}.json?key=${keyMatch}`;
     }
     const resp = await needle('get', encodeURI(jsonURL));
@@ -94,7 +121,10 @@ async function loadSchedule(url: string, dashID: string): Promise<HoraroSchedule
  * @param opts Options on how the schedule data should be parsed, including column numbers.
  * @param dashID UUID of dashboard element, generated on panel load and passed here.
  */
-async function importSchedule(optsO: ImportOptions, dashID: string): Promise<void> {
+async function importSchedule(
+  optsO: ImportOptions,
+  dashID: string
+): Promise<void> {
   try {
     horaroImportStatus.value.importing = true;
     const data = scheduleDataCache[dashID];
@@ -105,147 +135,161 @@ async function importSchedule(optsO: ImportOptions, dashID: string): Promise<voi
     // Sanitizing import option inputs with this "mess".
     const opts: ImportOptionsSanitized = {
       columns: {
-        game: (optsO.columns.game === null) ? -1 : optsO.columns.game,
-        gameTwitch: (optsO.columns.gameTwitch === null) ? -1 : optsO.columns.gameTwitch,
-        category: (optsO.columns.category === null) ? -1 : optsO.columns.category,
-        system: (optsO.columns.system === null) ? -1 : optsO.columns.system,
-        region: (optsO.columns.region === null) ? -1 : optsO.columns.region,
-        release: (optsO.columns.release === null) ? -1 : optsO.columns.release,
-        player: (optsO.columns.player === null) ? -1 : optsO.columns.player,
-        externalID: (optsO.columns.externalID === null) ? -1 : optsO.columns.externalID,
+        game: optsO.columns.game === null ? -1 : optsO.columns.game,
+        gameTwitch:
+          optsO.columns.gameTwitch === null ? -1 : optsO.columns.gameTwitch,
+        category: optsO.columns.category === null ? -1 : optsO.columns.category,
+        system: optsO.columns.system === null ? -1 : optsO.columns.system,
+        region: optsO.columns.region === null ? -1 : optsO.columns.region,
+        release: optsO.columns.release === null ? -1 : optsO.columns.release,
+        player: optsO.columns.player === null ? -1 : optsO.columns.player,
+        externalID:
+          optsO.columns.externalID === null ? -1 : optsO.columns.externalID,
         custom: {},
       },
       split: optsO.split,
     };
     Object.keys(optsO.columns.custom).forEach((col) => {
       const val = optsO.columns.custom[col];
-      opts.columns.custom[col] = (val === null) ? -1 : val;
+      opts.columns.custom[col] = val === null ? -1 : val;
     });
 
     const externalIDsSeen: string[] = [];
     // Filtering out any games on the ignore list before processing them all.
-    const newRunDataArray = await mapSeries(runItems.filter((run) => (
-      !checkGameAgainstIgnoreList(run.data[opts.columns.game], 'horaro')
-    )), async (run, index, arr) => {
-      horaroImportStatus.value.item = index + 1;
-      horaroImportStatus.value.total = arr.length;
+    const newRunDataArray = await mapSeries(
+      runItems.filter(
+        (run) =>
+          !checkGameAgainstIgnoreList(run.data[opts.columns.game], 'horaro')
+      ),
+      async (run, index, arr) => {
+        horaroImportStatus.value.item = index + 1;
+        horaroImportStatus.value.total = arr.length;
 
-      // If a run with the same external ID exists already, use the same UUID.
-      // This will only work for the first instance of an external ID; for hashes, this is usually
-      // only an issue if the same "run" happens twice in a schedule (for example a Setup block),
-      // and for actual defined IDs from a column should never happen, but idiot proofing it.
-      const externalID = run.data[opts.columns.externalID] || generateRunHash(run.data);
-      let matchingOldRun;
-      if (!externalIDsSeen.includes(externalID)) {
-        matchingOldRun = runDataArray.value.find((oldRun) => oldRun.externalID === externalID);
-        externalIDsSeen.push(externalID);
-      }
-
-      const runData: RunData = {
-        teams: [],
-        customData: {},
-        id: matchingOldRun?.id || uuid(),
-        externalID,
-      };
-
-      // General Run Data
-      runData.game = parseMarkdown(run.data[opts.columns.game]).str;
-      runData.system = parseMarkdown(run.data[opts.columns.system]).str;
-      runData.category = parseMarkdown(run.data[opts.columns.category]).str;
-      runData.region = parseMarkdown(run.data[opts.columns.region]).str;
-      runData.release = parseMarkdown(run.data[opts.columns.release]).str;
-
-      // Attempts to find the correct Twitch game directory.
-      const game = parseMarkdown(run.data[opts.columns.game]);
-      let gameTwitch = parseMarkdown(run.data[opts.columns.gameTwitch]).str;
-      // TODO: Don't even try to look up Twitch directory if we can't verify it!
-      let srcomGameTwitch;
-      if (!(config.schedule || config.horaro).disableSpeedrunComLookup && !gameTwitch) {
-        if (game.url && game.url.includes('speedrun.com')) {
-          const gameAbbr = game.url
-            .split('speedrun.com/')[game.url.split('speedrun.com/').length - 1]
-            .split('/')[0]
-            .split('#')[0];
-          [, srcomGameTwitch] = await to(searchForTwitchGame(gameAbbr, true));
+        // If a run with the same external ID exists already, use the same UUID.
+        // This will only work for the first instance of an external ID; for hashes, this is usually
+        // only an issue if the same "run" happens twice in a schedule (for example a Setup block),
+        // and for actual defined IDs from a column should never happen, but idiot proofing it.
+        const externalID =
+          run.data[opts.columns.externalID] || generateRunHash(run.data);
+        let matchingOldRun;
+        if (!externalIDsSeen.includes(externalID)) {
+          matchingOldRun = runDataArray.value.find(
+            (oldRun) => oldRun.externalID === externalID
+          );
+          externalIDsSeen.push(externalID);
         }
-        if (!srcomGameTwitch && game.str) {
-          [, srcomGameTwitch] = await to(searchForTwitchGame(game.str));
-        }
-      }
-      // Verify some game directory supplied exists on Twitch.
-      for (const str of [gameTwitch, srcomGameTwitch, game.str]) {
-        if (str) {
-          gameTwitch = (await to(verifyTwitchDir(str)))[1]?.name;
-          if (gameTwitch) {
-            break; // If a directory was successfully found, stop loop early.
+
+        const runData: RunData = {
+          teams: [],
+          customData: {},
+          id: matchingOldRun?.id || uuid(),
+          externalID,
+        };
+
+        // General Run Data
+        runData.game = parseMarkdown(run.data[opts.columns.game]).str;
+        runData.system = parseMarkdown(run.data[opts.columns.system]).str;
+        runData.category = parseMarkdown(run.data[opts.columns.category]).str;
+        runData.region = parseMarkdown(run.data[opts.columns.region]).str;
+        runData.release = parseMarkdown(run.data[opts.columns.release]).str;
+
+        // Attempts to find the correct Twitch game directory.
+        const game = parseMarkdown(run.data[opts.columns.game]);
+        let gameTwitch = parseMarkdown(run.data[opts.columns.gameTwitch]).str;
+        // TODO: Don't even try to look up Twitch directory if we can't verify it!
+        let srcomGameTwitch;
+        if (
+          !(config.schedule || config.horaro).disableSpeedrunComLookup &&
+          !gameTwitch
+        ) {
+          if (game.url && game.url.includes('speedrun.com')) {
+            const gameAbbr = game.url
+              .split('speedrun.com/')[game.url.split('speedrun.com/').length - 1].split('/')[0]
+              .split('#')[0];
+            [, srcomGameTwitch] = await to(searchForTwitchGame(gameAbbr, true));
+          }
+          if (!srcomGameTwitch && game.str) {
+            [, srcomGameTwitch] = await to(searchForTwitchGame(game.str));
           }
         }
-      }
-      runData.gameTwitch = gameTwitch;
-
-      // Scheduled Date/Time
-      runData.scheduledS = run.scheduled_t;
-      runData.scheduled = run.scheduled;
-
-      // Estimate
-      runData.estimateS = run.length_t;
-      runData.estimate = msToTimeStr(run.length_t * 1000);
-
-      // Setup Time
-      let runSetupTime = setupTime * 1000;
-      if (run.options && run.options.setup) {
-        const duration = parseDuration(run.options.setup);
-        if (duration > 0) {
-          runSetupTime = duration;
+        // Verify some game directory supplied exists on Twitch.
+        for (const str of [gameTwitch, srcomGameTwitch, game.str]) {
+          if (str) {
+            gameTwitch = (await to(verifyTwitchDir(str)))[1]?.name;
+            if (gameTwitch) {
+              break; // If a directory was successfully found, stop loop early.
+            }
+          }
         }
-      }
-      runData.setupTime = msToTimeStr(runSetupTime);
-      runData.setupTimeS = runSetupTime / 1000;
+        runData.gameTwitch = gameTwitch;
 
-      // Custom Data
-      Object.keys(opts.columns.custom).forEach((col) => {
-        const customDataConfig = config.customData?.run
-          || config.schedule?.customData
-          || config.horaro.customData;
-        if (!customDataConfig) {
-          return;
-        }
-        const colSetting = customDataConfig.find((setting) => setting.key === col);
-        if (!colSetting) {
-          return;
-        }
-        const colData = run.data[opts.columns.custom[col]];
-        const str = (!colSetting.ignoreMarkdown) ? parseMarkdown(colData).str : colData;
-        if (str) {
-          runData.customData[col] = str;
-        }
-      });
+        // Scheduled Date/Time
+        runData.scheduledS = run.scheduled_t;
+        runData.scheduled = run.scheduled;
 
-      // Players
-      const playerList = run.data[opts.columns.player];
-      if (playerList) {
-        // Mapping team string into something more manageable.
-        const teamSplittingRegex = [
-          /\s+vs\.?\s+/, // vs/vs.
-          /\s*,\s*/, // Comma (,)
-        ];
-        const teamsRaw = await mapSeries(
-          playerList.split(teamSplittingRegex[opts.split]),
-          (team) => {
-            const nameMatch = team.match(/^(.+)(?=:\s)/);
-            return {
-              name: (nameMatch) ? nameMatch[0] : undefined,
-              players: (opts.split === 0)
-                ? team.replace(/^(.+)(:\s)/, '').split(/\s*,\s*/)
-                : [team.replace(/^(.+)(:\s)/, '')],
-            };
-          },
-        );
+        // Estimate
+        runData.estimateS = run.length_t;
+        runData.estimate = msToTimeStr(run.length_t * 1000);
 
-        // Mapping team information from above into needed format.
-        runData.teams = await mapSeries(
-          teamsRaw,
-          async (rawTeam) => {
+        // Setup Time
+        let runSetupTime = setupTime * 1000;
+        if (run.options && run.options.setup) {
+          const duration = parseDuration(run.options.setup);
+          if (duration > 0) {
+            runSetupTime = duration;
+          }
+        }
+        runData.setupTime = msToTimeStr(runSetupTime);
+        runData.setupTimeS = runSetupTime / 1000;
+
+        // Custom Data
+        Object.keys(opts.columns.custom).forEach((col) => {
+          const customDataConfig =
+            config.customData?.run ||
+            config.schedule?.customData ||
+            config.horaro.customData;
+          if (!customDataConfig) {
+            return;
+          }
+          const colSetting = customDataConfig.find(
+            (setting) => setting.key === col
+          );
+          if (!colSetting) {
+            return;
+          }
+          const colData = run.data[opts.columns.custom[col]];
+          const str = !colSetting.ignoreMarkdown
+            ? parseMarkdown(colData).str
+            : colData;
+          if (str) {
+            runData.customData[col] = str;
+          }
+        });
+
+        // Players
+        const playerList = run.data[opts.columns.player];
+        if (playerList) {
+          // Mapping team string into something more manageable.
+          const teamSplittingRegex = [
+            /\s+vs\.?\s+/, // vs/vs.
+            /\s*,\s*/, // Comma (,)
+          ];
+          const teamsRaw = await mapSeries(
+            playerList.split(teamSplittingRegex[opts.split]),
+            (team) => {
+              const nameMatch = team.match(/^(.+)(?=:\s)/);
+              return {
+                name: nameMatch ? nameMatch[0] : undefined,
+                players:
+                  opts.split === 0
+                    ? team.replace(/^(.+)(:\s)/, '').split(/\s*,\s*/)
+                    : [team.replace(/^(.+)(:\s)/, '')],
+              };
+            }
+          );
+
+          // Mapping team information from above into needed format.
+          runData.teams = await mapSeries(teamsRaw, async (rawTeam) => {
             const team: RunDataTeam = {
               id: uuid(),
               name: parseMarkdown(rawTeam.name).str,
@@ -267,36 +311,45 @@ async function importSchedule(optsO: ImportOptions, dashID: string): Promise<voi
                   },
                   customData: {},
                 };
-                if (!(config.schedule || config.horaro).disableSpeedrunComLookup) {
+                if (
+                  !(config.schedule || config.horaro).disableSpeedrunComLookup
+                ) {
                   const sData = await searchForUserDataMultiple(
                     { type: 'twitch', val: twitchUsername },
                     { type: 'name', val: str },
                     { type: 'twitch', val: str },
-                    { type: 'twitter', val: str },
+                    { type: 'twitter', val: str }
                   );
                   if (sData) {
                     // Always favour the supplied Twitch username from schedule if available.
                     if (!twitchUsername) {
-                      const tURL = (sData.twitch && sData.twitch.uri)
-                        ? sData.twitch.uri : undefined;
+                      const tURL =
+                        sData.twitch && sData.twitch.uri
+                          ? sData.twitch.uri
+                          : undefined;
                       player.social.twitch = getTwitchUserFromURL(tURL);
                     }
                     player.country = sData.location?.country.code || undefined;
-                    player.pronouns = sData.pronouns?.toLowerCase() || undefined;
+                    player.pronouns =
+                      sData.pronouns?.toLowerCase() || undefined;
                   }
                 }
                 return player;
-              },
+              }
             );
 
             return team;
-          },
-        );
-      }
+          });
+        }
 
-      nodecg.log.debug(`[Horaro Import] Successfully imported ${index + 1}/${runItems.length}`);
-      return runData;
-    });
+        nodecg.log.debug(
+          `[Horaro Import] Successfully imported ${index + 1}/${
+            runItems.length
+          }`
+        );
+        return runData;
+      }
+    );
 
     runDataArray.value = newRunDataArray;
     resetImportStatus();

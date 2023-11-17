@@ -41,13 +41,10 @@
     </div>
     <!-- Enabled but not logged in server-side. -->
     <div v-else-if="apiData.state === 'off'">
-      <a
-        :href="url"
-        target="_blank"
-      >
-        <img src="./twitch-login.png">
+      <a :href="url" target="_blank">
+        <img src="./twitch-login.png" />
       </a>
-      <br><em>{{ $t('twitchLogin') }}</em>
+      <br /><em>{{ $t('twitchLogin') }}</em>
     </div>
     <!-- Enabled, authenticating server-side. -->
     <div v-else-if="apiData.state === 'authenticating'">
@@ -65,15 +62,8 @@
       >
         <v-tooltip left>
           <template v-slot:activator="{ on }">
-            <v-btn
-              id="Logout"
-              small
-              @click="logoutConfirm"
-              v-on="on"
-            >
-              <v-icon small>
-                mdi-logout
-              </v-icon>
+            <v-btn id="Logout" small @click="logoutConfirm" v-on="on">
+              <v-icon small> mdi-logout </v-icon>
               <span>({{ apiData.channelName }})</span>
             </v-btn>
           </template>
@@ -83,16 +73,12 @@
       <div
         id="AutoSyncContainer"
         :style="{
-          'display': 'flex',
+          display: 'flex',
           'align-items': 'center',
           padding: '10px',
         }"
       >
-        <v-switch
-          v-model="sync"
-          inset
-          hide-details
-        />
+        <v-switch v-model="sync" inset hide-details />
         <template v-if="!config.ffzIntegration">
           {{ $t('autosync') }}
         </template>
@@ -131,14 +117,15 @@
         @focus="inputActivity"
         @blur="inputActivity"
       />
-      <v-btn
-        class="mt-2"
-        block
-        @click="updateChannelInfo"
-      >
+      <v-btn class="mt-2" block @click="updateChannelInfo">
         {{ $t('update') }}
       </v-btn>
-      <template v-if="['affiliate', 'partner'].includes(apiData.broadcasterType)">
+      <template
+        v-if="
+          apiData.broadcasterType &&
+          ['affiliate', 'partner'].includes(apiData.broadcasterType)
+        "
+      >
         <div
           v-if="timer.secondsRemaining <= 0"
           class="d-flex justify-center align-center"
@@ -172,12 +159,7 @@
             </v-btn>
           </div>
         </div>
-        <v-btn
-          v-else
-          class="mt-2"
-          block
-          disabled
-        >
+        <v-btn v-else class="mt-2" block disabled>
           {{ $t('commercialRunning', { time: commercialTimeRemaining }) }}
         </v-btn>
       </template>
@@ -187,7 +169,12 @@
 
 <script lang="ts">
 import { Alert } from '@nodecg-speedcontrol/types';
-import { Configschema, TwitchAPIData, TwitchChannelInfo, TwitchCommercialTimer } from '@nodecg-speedcontrol/types/schemas';
+import {
+  Configschema,
+  TwitchAPIData,
+  TwitchChannelInfo,
+  TwitchCommercialTimer,
+} from '@nodecg-speedcontrol/types/schemas';
 import { debounce } from 'lodash';
 import { DeepReadonly } from 'vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
@@ -197,9 +184,12 @@ import { storeModule } from './store';
 
 @Component
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.twitchAPIData) readonly apiData!: TwitchAPIData;
-  @replicantNS.State((s) => s.reps.twitchChannelInfo) readonly channelInfo!: TwitchChannelInfo;
-  @replicantNS.State((s) => s.reps.twitchCommercialTimer) readonly timer!: TwitchCommercialTimer;
+  @replicantNS.State((s) => s.reps.twitchAPIData)
+  readonly apiData!: TwitchAPIData;
+  @replicantNS.State((s) => s.reps.twitchChannelInfo)
+  readonly channelInfo!: TwitchChannelInfo;
+  @replicantNS.State((s) => s.reps.twitchCommercialTimer)
+  readonly timer!: TwitchCommercialTimer;
   focus = false;
   title = '';
   game = '';
@@ -239,15 +229,19 @@ export default class extends Vue {
       'channel_commercial',
     ];
     if (this.config.additionalScopes) {
-      const addScopes = this.config.additionalScopes.filter((s) => !scopes.includes(s));
+      const addScopes = this.config.additionalScopes.filter(
+        (s) => !scopes.includes(s)
+      );
       scopes.push(...addScopes);
     }
-    return 'https://id.twitch.tv/oauth2/authorize'
-    + `?client_id=${this.config.clientID}`
-    + `&redirect_uri=${this.config.redirectURI}`
-    + '&response_type=code'
-    + `&scope=${scopes.join('+')}`
-    + '&force_verify=true';
+    return (
+      'https://id.twitch.tv/oauth2/authorize' +
+      `?client_id=${this.config.clientID}` +
+      `&redirect_uri=${this.config.redirectURI}` +
+      '&response_type=code' +
+      `&scope=${scopes.join('+')}` +
+      '&force_verify=true'
+    );
   }
 
   get commercialLengths(): number[] {
@@ -311,7 +305,7 @@ export default class extends Vue {
       try {
         await nodecg.sendMessage(
           'updateFeaturedChannels',
-          usersTmp.replace(/\s/g, '').split(',').filter(Boolean),
+          usersTmp.replace(/\s/g, '').split(',').filter(Boolean)
         );
       } catch (err) {
         // catch
@@ -321,7 +315,10 @@ export default class extends Vue {
 
   async startCommercial(duration: number): Promise<void> {
     try {
-      await nodecg.sendMessage('twitchStartCommercial', { duration, fromDashboard: true });
+      await nodecg.sendMessage('twitchStartCommercial', {
+        duration,
+        fromDashboard: true,
+      });
     } catch (err) {
       // catch
     }
@@ -355,7 +352,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }
@@ -363,8 +360,8 @@ export default class extends Vue {
 </script>
 
 <style scoped>
-  #AutoSyncContainer > .v-input {
-    margin: 0;
-    padding: 0;
-  }
+#AutoSyncContainer > .v-input {
+  margin: 0;
+  padding: 0;
+}
 </style>

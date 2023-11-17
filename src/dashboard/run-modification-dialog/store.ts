@@ -1,11 +1,22 @@
-import { RunData, RunDataPlayer, RunDataTeam, RunModification } from '@nodecg-speedcontrol/types';
+import {
+  RunData,
+  RunDataPlayer,
+  RunDataTeam,
+  RunModification,
+} from '@nodecg-speedcontrol/types';
 import type { DefaultSetupTime } from '@nodecg-speedcontrol/types/schemas';
 import { ReplicantModule } from '@nodecg-speedcontrol/_misc/replicant_store';
 import clone from 'clone';
 import { v4 as uuid } from 'uuid';
 import Vue from 'vue';
 import Vuex, { Store } from 'vuex';
-import { Action, getModule, Module, Mutation, VuexModule } from 'vuex-module-decorators';
+import {
+  Action,
+  getModule,
+  Module,
+  Mutation,
+  VuexModule,
+} from 'vuex-module-decorators';
 import { msToTimeStr } from '../_misc/helpers';
 
 Vue.use(Vuex);
@@ -38,23 +49,42 @@ class OurModule extends VuexModule {
   defaultSetupTime: DefaultSetupTime = 0;
 
   @Mutation
-  updateRunDataProp({ key, val }: { key: string, val: unknown }): void {
+  updateRunDataProp({ key, val }: { key: string; val: unknown }): void {
     Vue.set(this.runData, key, val);
   }
 
   @Mutation
-  updateTeamDataProp({ id, key, val }: { id: string, key: string, val: unknown }): void {
+  updateTeamDataProp({
+    id,
+    key,
+    val,
+  }: {
+    id: string;
+    key: string;
+    val: unknown;
+  }): void {
     const teamIndex = this.runData.teams.findIndex((t) => t.id === id);
     if (teamIndex >= 0) Vue.set(this.runData.teams[teamIndex], key, val);
   }
 
   @Mutation
-  updatePlayerDataProp(
-    { teamId, id, key, val }: { teamId: string, id: string, key: string, val: unknown },
-  ): void {
+  updatePlayerDataProp({
+    teamId,
+    id,
+    key,
+    val,
+  }: {
+    teamId: string;
+    id: string;
+    key: string;
+    val: unknown;
+  }): void {
     const teamIndex = this.runData.teams.findIndex((t) => t.id === teamId);
-    const playerIndex = this.runData.teams[teamIndex]?.players.findIndex((p) => p.id === id);
-    if (playerIndex >= 0) Vue.set(this.runData.teams[teamIndex]?.players[playerIndex], key, val);
+    const playerIndex = this.runData.teams[teamIndex]?.players.findIndex(
+      (p) => p.id === id
+    );
+    if (playerIndex >= 0)
+      Vue.set(this.runData.teams[teamIndex]?.players[playerIndex], key, val);
   }
 
   @Mutation
@@ -90,9 +120,14 @@ class OurModule extends VuexModule {
   @Mutation
   resetRunData(): void {
     Vue.set(this, 'runData', clone(defaultRunData));
-    if (this.defaultSetupTime) { // Fill in default setup time if available.
+    if (this.defaultSetupTime) {
+      // Fill in default setup time if available.
       Vue.set(this.runData, 'setupTimeS', this.defaultSetupTime);
-      Vue.set(this.runData, 'setupTime', msToTimeStr(this.defaultSetupTime * 1000));
+      Vue.set(
+        this.runData,
+        'setupTime',
+        msToTimeStr(this.defaultSetupTime * 1000)
+      );
     }
     Vue.set(this.runData, 'id', uuid());
     Vue.set(this, 'updateTwitchBool', false);
@@ -114,7 +149,9 @@ class OurModule extends VuexModule {
 
   @Mutation
   addNewPlayer(teamID: string): void {
-    const teamIndex = this.runData.teams.findIndex((team) => teamID === team.id);
+    const teamIndex = this.runData.teams.findIndex(
+      (team) => teamID === team.id
+    );
     if (teamIndex >= 0) {
       const data = clone(defaultPlayer);
       data.id = uuid();
@@ -125,17 +162,25 @@ class OurModule extends VuexModule {
 
   @Mutation
   removeTeam(teamID: string): void {
-    const teamIndex = this.runData.teams.findIndex((team) => teamID === team.id);
+    const teamIndex = this.runData.teams.findIndex(
+      (team) => teamID === team.id
+    );
     if (teamIndex >= 0) {
       this.runData.teams.splice(teamIndex, 1);
     }
   }
 
   @Mutation
-  removePlayer({ teamID, id }: { teamID: string, id: string }): void {
-    const teamIndex = this.runData.teams.findIndex((team) => teamID === team.id);
-    const playerIndex = (teamIndex >= 0)
-      ? this.runData.teams[teamIndex].players.findIndex((player) => id === player.id) : -1;
+  removePlayer({ teamID, id }: { teamID: string; id: string }): void {
+    const teamIndex = this.runData.teams.findIndex(
+      (team) => teamID === team.id
+    );
+    const playerIndex =
+      teamIndex >= 0
+        ? this.runData.teams[teamIndex].players.findIndex(
+            (player) => id === player.id
+          )
+        : -1;
     if (teamIndex >= 0 && playerIndex >= 0) {
       this.runData.teams[teamIndex].players.splice(playerIndex, 1);
     }

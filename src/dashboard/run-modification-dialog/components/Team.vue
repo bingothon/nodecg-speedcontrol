@@ -16,11 +16,7 @@
 <template>
   <div :style="{ 'margin-top': '20px' }">
     <div class="d-flex align-center">
-      <v-icon
-        large
-        class="TeamHandle"
-        :style="{ cursor: 'move' }"
-      >
+      <v-icon large class="TeamHandle" :style="{ cursor: 'move' }">
         mdi-drag
       </v-icon>
       <text-input
@@ -41,10 +37,7 @@
         @click="addNewPlayer(teamData.id)"
       />
     </div>
-    <draggable
-      v-model="teamData.players"
-      handle=".PlayerHandle"
-    >
+    <draggable v-model="teamData.players" handle=".PlayerHandle">
       <transition-group name="list">
         <player
           v-for="player in teamData.players"

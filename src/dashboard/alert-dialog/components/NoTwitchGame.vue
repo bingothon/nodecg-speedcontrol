@@ -12,7 +12,7 @@
 <template>
   <div>
     <div>{{ $t('alertText') }}</div>
-    <br>
+    <br />
     <div :style="{ float: 'right' }">
       <v-btn @click="$emit('dismiss')">
         {{ $t('ok') }}

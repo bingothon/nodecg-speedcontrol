@@ -73,11 +73,7 @@
         {{ $t('splitOpt') }}:
         <v-tooltip top>
           <template v-slot:activator="{ on }">
-            <v-icon
-              small
-              :style="{ 'padding-bottom': '2px' }"
-              v-on="on"
-            >
+            <v-icon small :style="{ 'padding-bottom': '2px' }" v-on="on">
               mdi-help-circle-outline
             </v-icon>
           </template>
@@ -102,12 +98,13 @@
     </div>
     <div :style="{ 'margin-top': '10px' }">
       <!-- Import Button, if importing -->
-      <v-btn
-        v-if="importStatus.importing"
-        disabled
-        block
-      >
-        {{ $t('importProgress', { item: importStatus.item, total: importStatus.total }) }}
+      <v-btn v-if="importStatus.importing" disabled block>
+        {{
+          $t('importProgress', {
+            item: importStatus.item,
+            total: importStatus.total,
+          })
+        }}
       </v-btn>
       <!-- Import Button, if not importing and no data loaded -->
       <v-btn
@@ -119,14 +116,8 @@
         {{ $t('import') }}
       </v-btn>
       <!-- Import Button, if not importing but data loaded -->
-      <div
-        v-else
-        class="d-flex justify-center"
-      >
-        <v-btn
-          :style="{ flex: 1 }"
-          @click="importConfirm"
-        >
+      <div v-else class="d-flex justify-center">
+        <v-btn :style="{ flex: 1 }" @click="importConfirm">
           {{ $t('import') }}
         </v-btn>
         <config-button
@@ -148,7 +139,10 @@
 
 <script lang="ts">
 import { Alert, HoraroSchedule } from '@nodecg-speedcontrol/types';
-import { HoraroImportSavedOpts, HoraroImportStatus } from '@nodecg-speedcontrol/types/schemas';
+import {
+  HoraroImportSavedOpts,
+  HoraroImportStatus,
+} from '@nodecg-speedcontrol/types/schemas';
 import { v4 as uuid } from 'uuid';
 import { DeepReadonly } from 'vue';
 import { Component, Vue } from 'vue-property-decorator';
@@ -166,10 +160,10 @@ import { storeModule } from './store';
   },
 })
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.horaroImportStatus) readonly importStatus!: HoraroImportStatus;
-  @replicantNS.State(
-    (s) => s.reps.horaroImportSavedOpts,
-  ) readonly horaroImportSavedOpts!: HoraroImportSavedOpts;
+  @replicantNS.State((s) => s.reps.horaroImportStatus)
+  readonly importStatus!: HoraroImportStatus;
+  @replicantNS.State((s) => s.reps.horaroImportSavedOpts)
+  readonly horaroImportSavedOpts!: HoraroImportSavedOpts;
   dashID = uuid(); // Temp ID for this page load.
   cfg = nodecg.bundleConfig;
   url = (this.cfg.schedule || this.cfg.horaro).defaultURL;
@@ -196,7 +190,9 @@ export default class extends Vue {
     storeModule.updateSplit(val);
   }
 
-  get customData(): DeepReadonly<{ name: string, key: string, ignoreMarkdown?: boolean }[]> {
+  get customData(): DeepReadonly<
+    { name: string; key: string; ignoreMarkdown?: boolean }[]
+  > {
     const cfg = nodecg.bundleConfig;
     return cfg.schedule?.customData || cfg.customData?.run || [];
   }
@@ -227,11 +223,9 @@ export default class extends Vue {
           name: col.name,
           key: col.key,
           custom: true,
-          predict: [
-            col.name.toLowerCase(),
-          ],
+          predict: [col.name.toLowerCase()],
         };
-      }),
+      })
     );
   }
 
@@ -240,12 +234,12 @@ export default class extends Vue {
       if (!option.predict.length) {
         return; // Ignore if no way to predict.
       }
-      const index = this.columns.findIndex(
-        (col) => option.predict.some((pred) => !!col.toLowerCase().includes(pred)),
+      const index = this.columns.findIndex((col) =>
+        option.predict.some((pred) => !!col.toLowerCase().includes(pred))
       );
       storeModule.updateColumn({
         name: option.key,
-        value: (index >= 0) ? index : null,
+        value: index >= 0 ? index : null,
         custom: option.custom || false,
       });
     });
@@ -278,7 +272,9 @@ export default class extends Vue {
   saveOpts(): void {
     storeModule.saveOpts();
     this.saved = true;
-    setTimeout(() => { this.saved = false; }, 1000);
+    setTimeout(() => {
+      this.saved = false;
+    }, 1000);
   }
 
   clearOpts(): void {
@@ -289,7 +285,9 @@ export default class extends Vue {
     this.predictColumns();
     storeModule.saveOpts();
     this.restored = true;
-    setTimeout(() => { this.restored = false; }, 1000);
+    setTimeout(() => {
+      this.restored = false;
+    }, 1000);
   }
 
   created(): void {
@@ -300,7 +298,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }
@@ -308,14 +306,14 @@ export default class extends Vue {
 </script>
 
 <style scoped>
-  /* Tweaks to dropdowns to make them smaller. */
-  .Dropdown >>> .v-input__slot {
-    min-height: 0 !important;
-  }
-  .Dropdown >>> .v-label {
-    top: 4px !important;
-  }
-  .Dropdown >>> .v-input__append-inner {
-    margin-top: 2px !important;
-  }
+/* Tweaks to dropdowns to make them smaller. */
+.Dropdown >>> .v-input__slot {
+  min-height: 0 !important;
+}
+.Dropdown >>> .v-label {
+  top: 4px !important;
+}
+.Dropdown >>> .v-input__append-inner {
+  margin-top: 2px !important;
+}
 </style>

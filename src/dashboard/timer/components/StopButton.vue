@@ -11,16 +11,10 @@
 
 <template>
   <div>
-    <v-tooltip
-      top
-      :disabled="isDisabled"
-    >
+    <v-tooltip top :disabled="isDisabled">
       <template v-slot:activator="{ on }">
         <span v-on="on">
-          <v-btn
-            :disabled="isDisabled"
-            @click="button"
-          >
+          <v-btn :disabled="isDisabled" @click="button">
             <v-icon v-if="forfeit">mdi-close</v-icon>
             <v-icon v-else>mdi-check</v-icon>
           </v-btn>
@@ -46,8 +40,9 @@ export default class extends Vue {
 
   get isDisabled(): boolean {
     return (
-      this.info?.id && !!this.timer.teamFinishTimes[this.info.id as string]
-    ) || !['running', 'paused'].includes(this.timer.state);
+      (this.info?.id && !!this.timer.teamFinishTimes[this.info.id as string]) ||
+      !['running', 'paused'].includes(this.timer.state)
+    );
   }
 
   async button(): Promise<void> {

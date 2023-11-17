@@ -13,22 +13,15 @@
 
 <template>
   <v-app>
-    <v-btn
-      class="green darken-2"
-      @click="openAddDialog"
-    >
-      <v-icon class="pr-2">
-        mdi-plus-box
-      </v-icon>{{ $t('addNewRun') }}
+    <v-btn class="green darken-2" @click="openAddDialog">
+      <v-icon class="pr-2"> mdi-plus-box </v-icon>{{ $t('addNewRun') }}
     </v-btn>
     <v-btn
       class="red darken-2 mt-3"
       :disabled="disableRemoveAll"
       @click="removeAllRunsConfirm"
     >
-      <v-icon class="pr-2">
-        mdi-delete
-      </v-icon>{{ $t('removeAllRuns') }}
+      <v-icon class="pr-2"> mdi-delete </v-icon>{{ $t('removeAllRuns') }}
     </v-btn>
   </v-app>
 </template>
@@ -49,7 +42,9 @@ export default class extends Vue {
   }
 
   openAddDialog(): void {
-    const dialog = getDialog('run-modification-dialog') as RunModification.Dialog;
+    const dialog = getDialog(
+      'run-modification-dialog'
+    ) as RunModification.Dialog;
     if (dialog) {
       dialog.openDialog({ mode: 'New' });
     }
@@ -79,7 +74,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }

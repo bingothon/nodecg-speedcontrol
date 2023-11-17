@@ -16,27 +16,26 @@
 <template>
   <v-app>
     <em>{{ $t('note') }}</em>
-    <div v-if="!teams.length">
-      <br>{{ $t('noneAvailable') }}
-    </div>
-    <draggable
-      v-else
-      v-model="teams"
-    >
+    <div v-if="!teams.length"><br />{{ $t('noneAvailable') }}</div>
+    <draggable v-else v-model="teams">
       <transition-group name="list">
         <v-card
-          v-for="(team) in teams"
+          v-for="team in teams"
           :key="team.id"
-          :style="{ 'text-align': 'center', padding: '5px', 'margin-top': '10px' }"
+          :style="{
+            'text-align': 'center',
+            padding: '5px',
+            'margin-top': '10px',
+          }"
         >
-          <span v-if="team.name">{{ team.name }}</span>
-          <span
-            v-for="(player, i) in team.players"
-            v-else
-            :key="player.id"
-          >
-            {{ player.name }}<span v-if="i+1 < team.players.length">,</span>
-          </span>
+          <template v-if="team.name">
+            <span>{{ team.name }}</span>
+          </template>
+          <template v-else>
+            <span v-for="(player, i) in team.players" :key="player.id">
+              {{ player.name }}<span v-if="i + 1 < team.players.length">,</span>
+            </span>
+          </template>
         </v-card>
       </transition-group>
     </draggable>
@@ -56,7 +55,8 @@ import { storeModule } from './store';
   },
 })
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly runDataActiveRun!: RunDataActiveRun;
+  @replicantNS.State((s) => s.reps.runDataActiveRun)
+  readonly runDataActiveRun!: RunDataActiveRun;
 
   get teams(): RunDataTeam[] {
     return this.runDataActiveRun?.teams || [];
@@ -69,7 +69,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }
@@ -77,14 +77,15 @@ export default class extends Vue {
 </script>
 
 <style scoped>
-  .list-move {
-    transition: transform 0.2s;
-  }
-  .list-enter, .list-leave-to {
-    opacity: 0;
-    transition: transform 0.2s, opacity 0.2s;
-  }
-  .list-leave-active {
-    position: absolute;
-  }
+.list-move {
+  transition: transform 0.2s;
+}
+.list-enter,
+.list-leave-to {
+  opacity: 0;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.list-leave-active {
+  position: absolute;
+}
 </style>

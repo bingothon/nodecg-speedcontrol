@@ -11,9 +11,7 @@ const options: RunDataOption[] = [
   {
     name: i18n.t('game') as string,
     key: 'game',
-    predict: [
-      'game',
-    ],
+    predict: ['game'],
   },
   {
     name: i18n.t('gameTwitch') as string,
@@ -25,47 +23,32 @@ const options: RunDataOption[] = [
   {
     name: i18n.t('category') as string,
     key: 'category',
-    predict: [
-      'category',
-    ],
+    predict: ['category'],
   },
   {
     name: i18n.t('system') as string,
     key: 'system',
-    predict: [
-      'system',
-      'platform',
-      'console',
-    ],
+    predict: ['system', 'platform', 'console'],
   },
   {
     name: i18n.t('region') as string,
     key: 'region',
-    predict: [
-      'region',
-    ],
+    predict: ['region'],
   },
   {
     name: i18n.t('released') as string,
     key: 'release',
-    predict: [
-      'release',
-    ],
+    predict: ['release'],
   },
   {
     name: i18n.t('players') as string,
     key: 'player',
-    predict: [
-      'player',
-      'runner',
-    ],
+    predict: ['player', 'runner'],
   },
   {
     name: i18n.t('externalID') as string,
     key: 'externalID',
-    predict: [
-      'id',
-    ],
+    predict: ['id'],
   },
 ];
 

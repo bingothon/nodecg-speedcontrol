@@ -39,15 +39,10 @@
         :disabled="disableChange || !nextRun"
         @click="playNextRun"
       >
-        <div
-          class="d-flex justify-center"
-          :style="{ width: '100%' }"
-        >
+        <div class="d-flex justify-center" :style="{ width: '100%' }">
           <template v-if="nextRun">
             <div>
-              <v-icon left>
-                mdi-play
-              </v-icon>
+              <v-icon left> mdi-play </v-icon>
             </div>
             <div :style="{ overflow: 'hidden' }">
               {{ nextRunStr }}
@@ -61,11 +56,7 @@
           </div>
         </div>
       </v-btn>
-      <v-alert
-        v-if="disableChange"
-        dense
-        type="info"
-      >
+      <v-alert v-if="disableChange" dense type="info">
         {{ $t('cannotChange', { state: timer.state }) }}
       </v-alert>
     </div>
@@ -75,7 +66,12 @@
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator';
-import { RunDataArray, RunDataActiveRun, RunDataActiveRunSurrounding, Timer } from '@nodecg-speedcontrol/types/schemas';
+import {
+  RunDataArray,
+  RunDataActiveRun,
+  RunDataActiveRunSurrounding,
+  Timer,
+} from '@nodecg-speedcontrol/types/schemas';
 import { RunData, Alert } from '@nodecg-speedcontrol/types';
 import RunList from '../_misc/components/RunList.vue';
 import { getDialog } from '../_misc/helpers';
@@ -87,25 +83,26 @@ import { replicantNS } from '../_misc/replicant_store';
   },
 })
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.runDataArray) readonly runDataArray!: RunDataArray;
-  @replicantNS.State(
-    (s) => s.reps.runDataActiveRun,
-  ) readonly activeRun!: RunDataActiveRun | undefined;
-  @replicantNS.State(
-    (s) => s.reps.runDataActiveRunSurrounding,
-  ) readonly runDataActiveRunSurrounding!: RunDataActiveRunSurrounding;
+  @replicantNS.State((s) => s.reps.runDataArray)
+  readonly runDataArray!: RunDataArray;
+  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly activeRun!:
+    | RunDataActiveRun
+    | undefined;
+  @replicantNS.State((s) => s.reps.runDataActiveRunSurrounding)
+  readonly runDataActiveRunSurrounding!: RunDataActiveRunSurrounding;
   @replicantNS.State((s) => s.reps.timer) readonly timer!: Timer;
 
   get nextRun(): RunData | undefined {
-    return this.runDataArray.find((run) => run.id === this.runDataActiveRunSurrounding.next);
+    return this.runDataArray.find(
+      (run) => run.id === this.runDataActiveRunSurrounding.next
+    );
   }
 
   get nextRunStr(): string {
     if (this.nextRun) {
-      const arr = [
-        this.nextRun.game || '?',
-        this.nextRun.category,
-      ].filter(Boolean);
+      const arr = [this.nextRun.game || '?', this.nextRun.category].filter(
+        Boolean
+      );
       return arr.join(' - ');
     }
     return '?';
@@ -155,7 +152,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }
@@ -163,7 +160,7 @@ export default class extends Vue {
 </script>
 
 <style scoped>
-  .NextRunBtn >>> .v-btn__content {
-    width: 100%;
-  }
+.NextRunBtn >>> .v-btn__content {
+  width: 100%;
+}
 </style>

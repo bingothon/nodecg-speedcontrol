@@ -1,7 +1,12 @@
 import { ReplicantModule } from '@nodecg-speedcontrol/_misc/replicant_store';
 import Vue from 'vue';
 import Vuex, { Store } from 'vuex';
-import { getModule, Module, Mutation, VuexModule } from 'vuex-module-decorators';
+import {
+  getModule,
+  Module,
+  Mutation,
+  VuexModule,
+} from 'vuex-module-decorators';
 
 Vue.use(Vuex);
 

@@ -10,6 +10,7 @@ export interface TwitchAPIData {
 	sync: boolean;
 	accessToken?: string;
 	refreshToken?: string;
+	tokenExpiresAt?: number;
 	channelName?: string;
 	channelID?: string;
 	broadcasterType?: string;

@@ -1,25 +1,39 @@
 import {
-	HoraroSchedule,
-	ImportOptions,
-	ImportOptionsSanitized, OengusLine,
-	OengusMarathon, OengusSchedule, OengusUser,
-	ParsedMarkdown,
-	RunData,
-	RunDataPlayer,
-	RunDataTeam
+  HoraroSchedule,
+  ImportOptions,
+  ImportOptionsSanitized,
+  OengusLine,
+  OengusMarathon,
+  OengusSchedule,
+  OengusUser,
+  ParsedMarkdown,
+  RunData,
+  RunDataPlayer,
+  RunDataTeam,
 } from '@nodecg-speedcontrol/types'; // eslint-disable-line object-curly-newline, max-len
 import crypto from 'crypto';
 import MarkdownIt from 'markdown-it';
-import needle, {NeedleResponse} from 'needle';
-import {mapSeries} from 'p-iteration';
+import needle, { NeedleResponse } from 'needle';
+import { mapSeries } from 'p-iteration';
 import parseDuration from 'parse-duration';
 import removeMd from 'remove-markdown';
-import {v4 as uuid} from 'uuid';
-import {searchForTwitchGame, searchForUserDataMultiple} from './srcom-api';
-import {verifyTwitchDir} from './twitch-api';
-import {checkGameAgainstIgnoreList, getTwitchUserFromURL, msToTimeStr, processAck, to} from './util/helpers'; // eslint-disable-line object-curly-newline, max-len
-import {get as ncgGet} from './util/nodecg';
-import {defaultSetupTime, horaroImportStatus, oengusImportStatus, runDataArray} from './util/replicants';
+import { v4 as uuid } from 'uuid';
+import { searchForTwitchGame, searchForUserDataMultiple } from './srcom-api';
+import { verifyTwitchDir } from './twitch-api';
+import {
+  checkGameAgainstIgnoreList,
+  getTwitchUserFromURL,
+  msToTimeStr,
+  processAck,
+  to,
+} from './util/helpers'; // eslint-disable-line object-curly-newline, max-len
+import { get as ncgGet } from './util/nodecg';
+import {
+  defaultSetupTime,
+  horaroImportStatus,
+  oengusImportStatus,
+  runDataArray,
+} from './util/replicants';
 
 const nodecg = ncgGet();
 const config = nodecg.bundleConfig;
@@ -27,38 +41,52 @@ const md = new MarkdownIt();
 const scheduleDataCache: { [k: string]: HoraroSchedule } = {};
 
 /**
+ * Resets the replicant's values to default.
+ */
+function resetImportStatus(): void {
+  horaroImportStatus.value.importing = false;
+  horaroImportStatus.value.item = 0;
+  horaroImportStatus.value.total = 0;
+  nodecg.log.debug('[Combo Import] Horaro Import status restored to default');
+}
+
+/**
  * Make a GET request to Oengus API.
  * @param endpoint Oengus API endpoint you want to access.
  */
 async function get(endpoint: string): Promise<NeedleResponse> {
-	try {
-		nodecg.log.debug(`[Oengus Import] API request processing on ${endpoint}`);
-		const resp = await needle(
-			'get',
-			`https://${config.oengus.useSandbox ? 'sandbox.' : ''}oengus.io/api/v1${endpoint}`,
-			null,
-			{
-				headers: {
-					'User-Agent': 'nodecg-speedcontrol',
-					Accept: 'application/json',
-					'oengus-version': '1',
-				},
-			},
-		);
-		if (resp.statusCode !== 200) {
-			console.log(endpoint);
-			throw new Error(`Status Code: ${resp.statusCode} - Body: ${JSON.stringify(resp.body)}`);
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore: parser exists but isn't in the typings
-		} else if (resp.parser !== 'json') {
-			throw new Error('Response was not JSON');
-		}
-		nodecg.log.debug(`[Oengus Import] API request successful on ${endpoint}`);
-		return resp;
-	} catch (err) {
-		nodecg.log.debug(`[Oengus Import] API request error on ${endpoint}:`, err);
-		throw err;
-	}
+  try {
+    nodecg.log.debug(`[Oengus Import] API request processing on ${endpoint}`);
+    const resp = await needle(
+      'get',
+      `https://${
+        config.oengus.useSandbox ? 'sandbox.' : ''
+      }oengus.io/api/v1${endpoint}`,
+      null,
+      {
+        headers: {
+          'User-Agent': 'nodecg-speedcontrol',
+          Accept: 'application/json',
+          'oengus-version': '1',
+        },
+      }
+    );
+    if (resp.statusCode !== 200) {
+      // console.log(endpoint);
+      throw new Error(
+        `Status Code: ${resp.statusCode} - Body: ${JSON.stringify(resp.body)}`
+      );
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore: parser exists but isn't in the typings
+    } else if (resp.parser !== 'json') {
+      throw new Error('Response was not JSON');
+    }
+    nodecg.log.debug(`[Oengus Import] API request successful on ${endpoint}`);
+    return resp;
+  } catch (err) {
+    nodecg.log.debug(`[Oengus Import] API request error on ${endpoint}:`, err);
+    throw err;
+  }
 }
 
 /**
@@ -68,42 +96,45 @@ async function get(endpoint: string): Promise<NeedleResponse> {
  * @param str Markdowned string you wish to parse.
  */
 function parseMarkdown(str?: string | null): ParsedMarkdown {
-	const results: ParsedMarkdown = {};
-	if (str) {
-		// Some stuff can break this, so try/catching it if needed.
-		try {
-			const res = md.parseInline(str, {});
-			let url;
-			if (res[0] && res[0].children) {
-				url = res[0].children.find((child) => (
-					child.type === 'link_open' && child.attrs
-					&& child.attrs[0] && child.attrs[0][0] === 'href'
-				));
-			}
-			results.url = (url && url.attrs) ? url.attrs[0][1] : undefined;
-			results.str = removeMd(str);
-		} catch (err) {
-			// return nothing
-		}
-	}
-	return results;
+  const results: ParsedMarkdown = {};
+  if (str) {
+    // Some stuff can break this, so try/catching it if needed.
+    try {
+      const res = md.parseInline(str, {});
+      let url;
+      if (res[0] && res[0].children) {
+        url = res[0].children.find(
+          (child) =>
+            child.type === 'link_open' &&
+            child.attrs &&
+            child.attrs[0] &&
+            child.attrs[0][0] === 'href'
+        );
+      }
+      results.url = url && url.attrs ? url.attrs[0][1] : undefined;
+      results.str = removeMd(str);
+    } catch (err) {
+      // return nothing
+    }
+  }
+  return results;
 }
 
 function resetOengusImportStatus(): void {
-	oengusImportStatus.value.importing = false;
-	oengusImportStatus.value.item = 0;
-	oengusImportStatus.value.total = 0;
-	nodecg.log.debug('[Combo Import] Oengus Import status restored to default');
+  oengusImportStatus.value.importing = false;
+  oengusImportStatus.value.item = 0;
+  oengusImportStatus.value.total = 0;
+  nodecg.log.debug('[Combo Import] Oengus Import status restored to default');
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isOengusMarathon(source: any): source is OengusMarathon {
-	return (typeof source.id === 'string' && typeof source.name === 'string');
+  return typeof source.id === 'string' && typeof source.name === 'string';
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isOengusSchedule(source: any): source is OengusSchedule {
-	return (typeof source.id === 'number' && source.lines !== undefined);
+  return typeof source.id === 'number' && source.lines !== undefined;
 }
 
 /**
@@ -192,17 +223,7 @@ async function importOengusPlayers(marathonShort: string, useJapanese: boolean) 
  * @param colData Array of strings (or nulls), obtained from the Horaro JSON data.
  */
 function generateRunHash(colData: (string | null)[]): string {
-	return crypto.createHash('sha1').update(colData.join(), 'utf8').digest('hex');
-}
-
-/**
- * Resets the replicant's values to default.
- */
-function resetImportStatus(): void {
-	horaroImportStatus.value.importing = false;
-	horaroImportStatus.value.item = 0;
-	horaroImportStatus.value.total = 0;
-	nodecg.log.debug('[Combo Import] Horaro Import status restored to default');
+  return crypto.createHash('sha1').update(colData.join(), 'utf8').digest('hex');
 }
 
 /**
@@ -210,25 +231,31 @@ function resetImportStatus(): void {
  * @param url URL of Horaro schedule.
  * @param dashID UUID of dashboard element, generated on panel load and passed here.
  */
-async function loadSchedule(url: string, dashID: string): Promise<HoraroSchedule> {
-	try {
-		let jsonURL = `${url}.json`;
-		if (url.match((/\?key=/))) { // If schedule URL has a key in it, extract it correctly.
-			const urlMatch = (url.match(/(.*?)(?=(\?key=))/) as RegExpMatchArray)[0];
-			const keyMatch = (url.match(/(?<=(\?key=))(.*?)$/) as RegExpMatchArray)[0];
-			jsonURL = `${urlMatch}.json?key=${keyMatch}`;
-		}
-		const resp = await needle('get', encodeURI(jsonURL));
-		if (resp.statusCode !== 200) {
-			throw new Error(`HTTP status code was ${resp.statusCode}`);
-		}
-		scheduleDataCache[dashID] = resp.body;
-		nodecg.log.debug('[Horaro Import] Schedule successfully loaded');
-		return resp.body;
-	} catch (err) {
-		nodecg.log.debug('[Horaro Import] Schedule could not be loaded:', err);
-		throw err;
-	}
+async function loadSchedule(
+  url: string,
+  dashID: string
+): Promise<HoraroSchedule> {
+  try {
+    let jsonURL = `${url}.json`;
+    if (url.match(/\?key=/)) {
+      // If schedule URL has a key in it, extract it correctly.
+      const urlMatch = (url.match(/(.*?)(?=(\?key=))/) as RegExpMatchArray)[0];
+      const keyMatch = (
+        url.match(/(?<=(\?key=))(.*?)$/) as RegExpMatchArray
+      )[0];
+      jsonURL = `${urlMatch}.json?key=${keyMatch}`;
+    }
+    const resp = await needle('get', encodeURI(jsonURL));
+    if (resp.statusCode !== 200) {
+      throw new Error(`HTTP status code was ${resp.statusCode}`);
+    }
+    scheduleDataCache[dashID] = resp.body;
+    nodecg.log.debug('[Horaro Import] Schedule successfully loaded');
+    return resp.body;
+  } catch (err) {
+    nodecg.log.debug('[Horaro Import] Schedule could not be loaded:', err);
+    throw err;
+  }
 }
 
 /**
@@ -461,22 +488,27 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 }
 
 nodecg.listenFor('loadComboSchedule', (data, ack) => {
-	loadSchedule(data.url, data.dashID)
-		.then((data_) => processAck(ack, null, data_))
-		.catch((err) => processAck(ack, err));
+  loadSchedule(data.url, data.dashID)
+    .then((data_) => processAck(ack, null, data_))
+    .catch((err) => processAck(ack, err));
 });
 
 nodecg.listenFor('importComboSchedule', async (data, ack) => {
-	try {
-		if (horaroImportStatus.value.importing) {
-			throw new Error('Already importing schedule');
-		}
-		nodecg.log.info('[Combo Import] Started importing schedule');
-		await importSchedule(data.opts, data.dashID, data.oengusShort, data.useJPOengusNames);
-		nodecg.log.info('[Combo Import] Successfully imported schedule');
-		processAck(ack, null);
-	} catch (err) {
-		nodecg.log.warn('[Combo Import] Error importing schedule:', err);
-		processAck(ack, err);
-	}
+  try {
+    if (horaroImportStatus.value.importing) {
+      throw new Error('Already importing schedule');
+    }
+    nodecg.log.info('[Combo Import] Started importing schedule');
+    await importSchedule(
+      data.opts,
+      data.dashID,
+      data.oengusShort,
+      data.useJPOengusNames
+    );
+    nodecg.log.info('[Combo Import] Successfully imported schedule');
+    processAck(ack, null);
+  } catch (err) {
+    nodecg.log.warn('[Combo Import] Error importing schedule:', err);
+    processAck(ack, err);
+  }
 });

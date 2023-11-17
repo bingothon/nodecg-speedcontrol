@@ -38,13 +38,15 @@ import { replicantNS } from '../_misc/replicant_store';
   },
 })
 export default class extends Vue {
-  @replicantNS.State(
-    (s) => s.reps.runDataActiveRun,
-  ) readonly activeRun!: RunDataActiveRun | undefined;
+  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly activeRun!:
+    | RunDataActiveRun
+    | undefined;
 
   editActiveRun(): void {
     if (this.activeRun) {
-      const dialog = getDialog('run-modification-dialog') as RunModification.Dialog;
+      const dialog = getDialog(
+        'run-modification-dialog'
+      ) as RunModification.Dialog;
       if (dialog) {
         dialog.openDialog({
           mode: 'EditActive',
@@ -58,7 +60,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string,
+        this.$t('panelTitle') as string
       );
     }
   }
