@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
-import type NodeCG from '@alvancamp/test-nodecg-types';
 import type { DefaultSetupTime, HoraroImportSavedOpts, HoraroImportStatus, OengusImportStatus, RunDataActiveRun, RunDataActiveRunSurrounding, RunDataArray, RunFinishTimes, Timer, TimerChangesDisabled, TwitchAPIData, TwitchChannelInfo, TwitchCommercialTimer } from '@nodecg-speedcontrol/types/schemas';
+import type NodeCG from '@nodecg/types';
 import { get as nodecg } from './nodecg';
 
 /**
@@ -13,7 +13,7 @@ export const defaultSetupTime = nodecg().Replicant<DefaultSetupTime>('defaultSet
 export const horaroImportSavedOpts = nodecg().Replicant<HoraroImportSavedOpts>('horaroImportSavedOpts') as unknown as NodeCG.ServerReplicantWithSchemaDefault<HoraroImportSavedOpts>;
 export const horaroImportStatus = nodecg().Replicant<HoraroImportStatus>('horaroImportStatus', { persistent: false }) as unknown as NodeCG.ServerReplicantWithSchemaDefault<HoraroImportStatus>;
 export const oengusImportStatus = nodecg().Replicant<OengusImportStatus>('oengusImportStatus', { persistent: false }) as unknown as NodeCG.ServerReplicantWithSchemaDefault<OengusImportStatus>;
-export const runDataActiveRun = nodecg().Replicant<RunDataActiveRun>('runDataActiveRun') as unknown as NodeCG.ServerReplicantWithSchemaDefault<RunDataActiveRun>;
+export const runDataActiveRun = nodecg().Replicant<RunDataActiveRun>('runDataActiveRun') as unknown as NodeCG.ServerReplicant<RunDataActiveRun>;
 export const runDataActiveRunSurrounding = nodecg().Replicant<RunDataActiveRunSurrounding>('runDataActiveRunSurrounding') as unknown as NodeCG.ServerReplicantWithSchemaDefault<RunDataActiveRunSurrounding>;
 export const runDataArray = nodecg().Replicant<RunDataArray>('runDataArray') as unknown as NodeCG.ServerReplicantWithSchemaDefault<RunDataArray>;
 export const runFinishTimes = nodecg().Replicant<RunFinishTimes>('runFinishTimes') as unknown as NodeCG.ServerReplicantWithSchemaDefault<RunFinishTimes>;
