@@ -208,50 +208,59 @@ async function importSchedule(
         runData.scheduledS = scheduledTime;
         scheduledTime += runData.estimateS + runData.setupTimeS;
 
-      // Team Data
-      runData.teams = await mapSeries(line.runners, async (runner) => {
-        const team: RunDataTeam = {
-          id: uuid(),
-          players: [],
-        };
-        const playerTwitch = runner.connections
-          ?.find((c) => c.platform === 'TWITCH')?.username || runner.twitchName;
-        const playerPronouns = typeof runner.pronouns === 'string'
-          ? runner.pronouns.split(',')
-          : runner.pronouns;
-        const player: RunDataPlayer = {
-          name: (useJapanese && runner.displayName)
-            ? runner.displayName : runner.username,
-          id: uuid(),
-          teamID: team.id,
-          social: {
-            twitch: playerTwitch || undefined,
-          },
-          country: runner.country?.toLowerCase() || undefined,
-          pronouns: playerPronouns?.join(', ') || undefined,
-          customData: {},
-        };
-        if (!config.oengus.disableSpeedrunComLookup) {
-          const playerTwitter = runner.connections
-            ?.find((c) => c.platform === 'TWITTER')?.username || runner.twitterName;
-          const playerSrcom = runner.connections
-            ?.find((c) => c.platform === 'SPEEDRUNCOM')?.username || runner.speedruncomName;
-          const data = await searchForUserDataMultiple(
-            { type: 'srcom', val: playerSrcom },
-            { type: 'twitch', val: playerTwitch },
-            { type: 'twitter', val: playerTwitter },
-            { type: 'name', val: runner.username },
-          );
-          if (data) {
-            // Always favour the supplied Twitch username/country/pronouns
-            // from Oengus if available.
-            if (!playerTwitch) {
-              const tURL = data.twitch?.uri || undefined;
-              player.social.twitch = getTwitchUserFromURL(tURL);
-            }
-            if (!runner.country) player.country = data.location?.country.code || undefined;
-            if (!runner.pronouns?.length) {
-              player.pronouns = data.pronouns?.toLowerCase() || undefined;
+        // Team Data
+        runData.teams = await mapSeries(line.runners, async (runner) => {
+          const team: RunDataTeam = {
+            id: uuid(),
+            players: [],
+          };
+          const playerTwitch =
+            runner.connections?.find((c) => c.platform === 'TWITCH')
+              ?.username || runner.twitchName;
+          const playerPronouns =
+            typeof runner.pronouns === 'string'
+              ? runner.pronouns.split(',')
+              : runner.pronouns;
+          const player: RunDataPlayer = {
+            name:
+              useJapanese && runner.displayName
+                ? runner.displayName
+                : runner.username,
+            id: uuid(),
+            teamID: team.id,
+            social: {
+              twitch: playerTwitch || undefined,
+            },
+            country: runner.country?.toLowerCase() || undefined,
+            pronouns: playerPronouns?.join(', ') || undefined,
+            customData: {},
+          };
+          if (!config.oengus.disableSpeedrunComLookup) {
+            const playerTwitter =
+              runner.connections?.find((c) => c.platform === 'TWITTER')
+                ?.username || runner.twitterName;
+            const playerSrcom =
+              runner.connections?.find((c) => c.platform === 'SPEEDRUNCOM')
+                ?.username || runner.speedruncomName;
+            const data = await searchForUserDataMultiple(
+              { type: 'srcom', val: playerSrcom },
+              { type: 'twitch', val: playerTwitch },
+              { type: 'twitter', val: playerTwitter },
+              { type: 'name', val: runner.username }
+            );
+            if (data) {
+              // Always favour the supplied Twitch username/country/pronouns
+              // from Oengus if available.
+              if (!playerTwitch) {
+                const tURL = data.twitch?.uri || undefined;
+                player.social.twitch = getTwitchUserFromURL(tURL);
+              }
+              if (!runner.country) {
+                player.country = data.location?.country.code || undefined;
+              }
+              if (!runner.pronouns?.length) {
+                player.pronouns = data.pronouns?.toLowerCase() || undefined;
+              }
             }
           }
           team.players.push(player);
