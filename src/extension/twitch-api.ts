@@ -183,7 +183,7 @@ async function refreshChannelInfo(): Promise<void> {
  */
 async function searchForGame(
   query: string
-): Promise<{ id: string; name: string; gameCover: string }> {
+  ): Promise<{ id: string; name: string; gameCover: string }> {
   if (twitchAPIData.value.state !== 'on') {
     throw new Error('Integration not ready');
   }
@@ -200,6 +200,8 @@ async function searchForGame(
   } else if (!resp.body.data || !resp.body.data.length) {
     throw new Error(`No game matches for "${query}"`);
   }
+  
+  
 
   // Update the type to include gameCover
   const results = resp.body.data as {

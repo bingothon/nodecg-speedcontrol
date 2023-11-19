@@ -158,6 +158,9 @@ async function importSchedule(
         const parsedSetup = isoParse(line.setupTime);
         runData.setupTime = formatDuration(parsedSetup);
         runData.setupTimeS = toSeconds(parsedSetup);
+        
+        let gameCover = '';
+        
         if (line.setupBlock) {
           // Game name set to "Setup" if the line is a setup block.
           runData.game = line.setupBlockText || 'Setup';
@@ -177,7 +180,9 @@ async function importSchedule(
           // Verify some game directory supplied exists on Twitch.
           for (const str of [srcomGameTwitch, line.gameName]) {
             if (str) {
-              gameTwitch = (await to(verifyTwitchDir(str)))[1]?.name;
+              const twitchDirectoryResult = await to(verifyTwitchDir(str));
+              gameTwitch = twitchDirectoryResult[1]?.name;
+              gameCover = twitchDirectoryResult[1]?.gameCover || '';
               if (gameTwitch) {
                 break; // If a directory was successfully found, stop loop early.
               }
@@ -202,6 +207,8 @@ async function importSchedule(
             });
           }
         }
+        // putting it in here in case it gets accidentally overwritten, should not be customData tho
+        runData.customData.gameCover = gameCover;
 
         // Add the scheduled time then update the value above for the next run.
         runData.scheduled = new Date(scheduledTime * 1000).toISOString();
