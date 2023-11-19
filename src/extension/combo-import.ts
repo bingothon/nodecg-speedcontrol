@@ -343,16 +343,19 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 					[, srcomGameTwitch] = await to(searchForTwitchGame(game.str));
 				}
 			}
+      let gameCover = '';
 			// Verify some game directory supplied exists on Twitch.
 			for (const str of [gameTwitch, srcomGameTwitch, game.str]) {
 				if (str) {
-					gameTwitch = (await to(verifyTwitchDir(str)))[1]?.name;
+          const twitchDirectoryResult = await to(verifyTwitchDir(gameTwitch || str));
+          gameCover = twitchDirectoryResult[1]?.gameCover || 'undefined';
 					if (gameTwitch) {
 						break; // If a directory was successfully found, stop loop early.
 					}
 				}
 			}
 			runData.gameTwitch = gameTwitch;
+      runData.customData.gameCover = gameCover;
 
 			// Scheduled Date/Time
 			runData.scheduledS = run.scheduled_t;
