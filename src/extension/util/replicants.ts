@@ -11,8 +11,8 @@ import { get as nodecg } from './nodecg';
 
 export const defaultSetupTime = nodecg().Replicant<DefaultSetupTime>('defaultSetupTime') as unknown as NodeCG.ServerReplicantWithSchemaDefault<DefaultSetupTime>;
 export const horaroImportSavedOpts = nodecg().Replicant<HoraroImportSavedOpts>('horaroImportSavedOpts') as unknown as NodeCG.ServerReplicantWithSchemaDefault<HoraroImportSavedOpts>;
-export const horaroImportStatus = nodecg().Replicant<HoraroImportStatus>('horaroImportStatus', { persistent: false }) as unknown as NodeCG.ServerReplicantWithSchemaDefault<HoraroImportStatus>;
-export const oengusImportStatus = nodecg().Replicant<OengusImportStatus>('oengusImportStatus', { persistent: false }) as unknown as NodeCG.ServerReplicantWithSchemaDefault<OengusImportStatus>;
+export const horaroImportStatus = nodecg().Replicant<HoraroImportStatus>('horaroImportStatus', { defaultValue: { importing: false, item: 0, total: 0 }, persistent: false }) as unknown as NodeCG.ServerReplicantWithSchemaDefault<HoraroImportStatus>;
+export const oengusImportStatus = nodecg().Replicant<OengusImportStatus>('oengusImportStatus', { defaultValue: { importing: false, item: 0, total: 0 }, persistent: false }) as unknown as NodeCG.ServerReplicantWithSchemaDefault<OengusImportStatus>;
 export const runDataActiveRun = nodecg().Replicant<RunDataActiveRun>('runDataActiveRun') as unknown as NodeCG.ServerReplicant<RunDataActiveRun>;
 export const runDataActiveRunSurrounding = nodecg().Replicant<RunDataActiveRunSurrounding>('runDataActiveRunSurrounding') as unknown as NodeCG.ServerReplicantWithSchemaDefault<RunDataActiveRunSurrounding>;
 export const runDataArray = nodecg().Replicant<RunDataArray>('runDataArray') as unknown as NodeCG.ServerReplicantWithSchemaDefault<RunDataArray>;

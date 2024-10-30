@@ -1,53 +1,82 @@
 import {
-  HoraroSchedule,
-  ImportOptions,
-  ImportOptionsSanitized,
-  OengusLine,
-  OengusMarathon,
-  OengusSchedule,
-  OengusUser,
-  ParsedMarkdown,
-  RunData,
-  RunDataPlayer,
-  RunDataTeam,
+	HoraroSchedule,
+	ImportOptions,
+	ImportOptionsSanitized,
+	RunData,
+	RunDataPlayer,
+	RunDataTeam,
+	paths,
 } from '@nodecg-speedcontrol/types'; // eslint-disable-line object-curly-newline, max-len
 import crypto from 'crypto';
-import MarkdownIt from 'markdown-it';
 import needle, { NeedleResponse } from 'needle';
 import { mapSeries } from 'p-iteration';
 import parseDuration from 'parse-duration';
-import removeMd from 'remove-markdown';
 import { v4 as uuid } from 'uuid';
 import { searchForTwitchGame, searchForUserDataMultiple } from './srcom-api';
 import { verifyTwitchDir } from './twitch-api';
 import {
-  checkGameAgainstIgnoreList,
-  getTwitchUserFromURL,
-  msToTimeStr,
-  processAck,
-  to,
+	checkGameAgainstIgnoreList,
+	getTwitchUserFromURL,
+	msToTimeStr,
+	parseMarkdown,
+	processAck,
+	to,
 } from './util/helpers'; // eslint-disable-line object-curly-newline, max-len
 import { get as ncgGet } from './util/nodecg';
 import {
-  defaultSetupTime,
-  horaroImportStatus,
-  oengusImportStatus,
-  runDataArray,
+	defaultSetupTime,
+	horaroImportStatus,
+	oengusImportStatus,
+	runDataArray,
 } from './util/replicants';
+
+type OengusMarathon = paths['/v2/marathons/for-home']['get']['responses']['200']['content']['application/json']['live'] |
+	paths['/v2/marathons/for-home']['get']['responses']['200']['content']['application/json']['next'] |
+	paths['/v2/marathons/for-home']['get']['responses']['200']['content']['application/json']['open'];
+type OengusLines = paths['/v2/marathons/{marathonId}/schedules/{scheduleId}/lines']['get']['responses']['200']['content']['application/json'];
+type OengusLine = NonNullable<OengusLines>[number];
+type OengusSchedule = paths['/v2/marathons/{marathonId}/schedules/for-slug/{slug}']['get']['responses']['200']['content']['application/json'];
+type OengusRunnerItem = NonNullable<OengusLine['runners']>[number];
+type OengusProfile = NonNullable<OengusRunnerItem['profile']>;
+
 
 const nodecg = ncgGet();
 const config = nodecg.bundleConfig;
-const md = new MarkdownIt();
 const scheduleDataCache: { [k: string]: HoraroSchedule } = {};
 
 /**
  * Resets the replicant's values to default.
  */
 function resetImportStatus(): void {
-  horaroImportStatus.value.importing = false;
-  horaroImportStatus.value.item = 0;
-  horaroImportStatus.value.total = 0;
-  nodecg.log.debug('[Combo Import] Horaro Import status restored to default');
+	horaroImportStatus.value.importing = false;
+	horaroImportStatus.value.item = 0;
+	horaroImportStatus.value.total = 0;
+	nodecg.log.debug('[Combo Import] Horaro Import status restored to default');
+}
+
+function resetOengusImportStatus(): void {
+	oengusImportStatus.value.importing = false;
+	oengusImportStatus.value.item = 0;
+	oengusImportStatus.value.total = 0;
+	nodecg.log.debug('[Combo Import] Oengus Import status restored to default');
+}
+
+/**
+ * Typechecking
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isOengusSchedule(source: any): source is OengusSchedule {
+	return typeof source.id === 'number' && source.lines !== undefined;
+}
+
+function checkValidOengusLine(line: any): line is OengusLine {
+	return (
+		line !== undefined &&
+		line !== null &&
+		typeof line.gameName === 'string' &&
+		Array.isArray(line.runners)
+	);
 }
 
 /**
@@ -55,86 +84,37 @@ function resetImportStatus(): void {
  * @param endpoint Oengus API endpoint you want to access.
  */
 async function get(endpoint: string): Promise<NeedleResponse> {
-  try {
-    nodecg.log.debug(`[Oengus Import] API request processing on ${endpoint}`);
-    const resp = await needle(
-      'get',
-      `https://${
-        config.oengus.useSandbox ? 'sandbox.' : ''
-      }oengus.io/api/v1${endpoint}`,
-      null,
-      {
-        headers: {
-          'User-Agent': 'nodecg-speedcontrol',
-          Accept: 'application/json',
-          'oengus-version': '1',
-        },
-      }
-    );
-    if (resp.statusCode !== 200) {
-      // console.log(endpoint);
-      throw new Error(
-        `Status Code: ${resp.statusCode} - Body: ${JSON.stringify(resp.body)}`
-      );
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore: parser exists but isn't in the typings
-    } else if (resp.parser !== 'json') {
-      throw new Error('Response was not JSON');
-    }
-    nodecg.log.debug(`[Oengus Import] API request successful on ${endpoint}`);
-    return resp;
-  } catch (err) {
-    nodecg.log.debug(`[Oengus Import] API request error on ${endpoint}:`, err);
-    throw err;
-  }
-}
-
-/**
- * Used to parse Markdown from schedules.
- * Returns URL of first link and a string with all formatting removed.
- * Will return both undefined if nothing is supplied.
- * @param str Markdowned string you wish to parse.
- */
-function parseMarkdown(str?: string | null): ParsedMarkdown {
-  const results: ParsedMarkdown = {};
-  if (str) {
-    // Some stuff can break this, so try/catching it if needed.
-    try {
-      const res = md.parseInline(str, {});
-      let url;
-      if (res[0] && res[0].children) {
-        url = res[0].children.find(
-          (child) =>
-            child.type === 'link_open' &&
-            child.attrs &&
-            child.attrs[0] &&
-            child.attrs[0][0] === 'href'
-        );
-      }
-      results.url = url && url.attrs ? url.attrs[0][1] : undefined;
-      results.str = removeMd(str);
-    } catch (err) {
-      // return nothing
-    }
-  }
-  return results;
-}
-
-function resetOengusImportStatus(): void {
-  oengusImportStatus.value.importing = false;
-  oengusImportStatus.value.item = 0;
-  oengusImportStatus.value.total = 0;
-  nodecg.log.debug('[Combo Import] Oengus Import status restored to default');
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isOengusMarathon(source: any): source is OengusMarathon {
-  return typeof source.id === 'string' && typeof source.name === 'string';
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isOengusSchedule(source: any): source is OengusSchedule {
-  return typeof source.id === 'number' && source.lines !== undefined;
+	try {
+		nodecg.log.debug(`[Oengus Import] API request processing on ${endpoint}`);
+		const resp = await needle(
+			'get',
+			`https://${config.oengus.useSandbox ? 'sandbox.' : ''
+			}oengus.io/api/v2${endpoint}`,
+			null,
+			{
+				headers: {
+					'User-Agent': 'nodecg-speedcontrol',
+					Accept: 'application/json',
+					'oengus-version': '2',
+				},
+			}
+		);
+		if (resp.statusCode !== 200) {
+			// console.log(endpoint);
+			throw new Error(
+				`Status Code: ${resp.statusCode} - Body: ${JSON.stringify(resp.body)}`
+			);
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore: parser exists but isn't in the typings
+		} else if (resp.parser !== 'json') {
+			throw new Error('Response was not JSON');
+		}
+		nodecg.log.debug(`[Oengus Import] API request successful on ${endpoint}`);
+		return resp;
+	} catch (err) {
+		nodecg.log.debug(`[Oengus Import] API request error on ${endpoint}:`, err);
+		throw err;
+	}
 }
 
 /**
@@ -142,72 +122,94 @@ function isOengusSchedule(source: any): source is OengusSchedule {
  * @param marathonShort Oengus' marathon shortname you want to import.
  * @param useJapanese If you want to use usernameJapanese from the user data.
  */
-async function importOengusPlayers(marathonShort: string, useJapanese: boolean) {
+
+async function importOengusPlayers(marathonShort: string, scheduleSlug: string, useJapanese: boolean) {
 	try {
 		oengusImportStatus.value.importing = true;
-		const marathonResp = await get(`/marathons/${marathonShort}`);
-		const scheduleResp = await get(`/marathons/${marathonShort}/schedule?withCustomData=true`);
-		if (!isOengusMarathon(marathonResp.body)) {
-			throw new Error('Did not receive marathon data correctly');
-		}
+		const scheduleResp = await get(`/marathons/${marathonShort}/schedules/for-slug/${scheduleSlug}`);
+
 		if (!isOengusSchedule(scheduleResp.body)) {
 			throw new Error('Did not receive schedule data correctly');
 		}
 
-		const oengusLines = scheduleResp.body.lines;
+		// Ensure oengusLines is always a defined array and only contains valid lines
+		const oengusLines = scheduleResp.body.lines?.filter(checkValidOengusLine);
 
-		// Filtering out any games on the ignore list before processing them all.
-		let playersArray = await mapSeries(oengusLines.filter((line: OengusLine) => (
-			!checkGameAgainstIgnoreList(line.gameName, 'oengus')
-		)), async (line, index, arr) => {
-			oengusImportStatus.value.item = index + 1;
-			oengusImportStatus.value.total = arr.length;
+		if (!oengusLines) {
+			throw new Error('No schedule data found');
+		}
 
-			// Team Data
-			let players = await mapSeries((line as OengusLine).runners, async (runner: OengusUser) => {
-				const playerTwitch = runner.connections
-					?.find((c) => c.platform === 'TWITCH')?.username || runner.twitchName;
-				const playerPronouns = typeof runner.pronouns === 'string'
-					? runner.pronouns.split(',')
-					: runner.pronouns;
-				const player = {
-					name: runner.username,
-					displayName: runner.displayName,
-					social: {
-						twitch: playerTwitch || undefined,
-					},
-					country: runner.country?.toLowerCase() || undefined,
-					pronouns: playerPronouns?.join(', ') || undefined,
-					customData: {},
-				};
-				if (!config.oengus.disableSpeedrunComLookup) {
-					const playerTwitter = runner.connections
-						?.find((c) => c.platform === 'TWITTER')?.username || runner.twitterName;
-					const playerSrcom = runner.connections
-						?.find((c) => c.platform === 'SPEEDRUNCOM')?.username || runner.speedruncomName;
-					const data = await searchForUserDataMultiple(
-						{type: 'srcom', val: playerSrcom},
-						{type: 'twitch', val: playerTwitch},
-						{type: 'twitter', val: playerTwitter},
-						{type: 'name', val: runner.username},
-					);
-					if (data) {
-						// Always favour the supplied Twitch username/country/pronouns
-						// from Oengus if available.
-						if (!playerTwitch) {
-							const tURL = data.twitch?.uri || undefined;
-							player.social.twitch = getTwitchUserFromURL(tURL);
-						}
-						if (!runner.country) player.country = data.location?.country.code || undefined;
-						if (!runner.pronouns?.length) {
-							player.pronouns = data.pronouns?.toLowerCase() || undefined;
+		let playersArray = await mapSeries(
+			oengusLines
+				.filter((line: OengusLine | undefined) => line && line.game && !checkGameAgainstIgnoreList(line.game, 'oengus'))
+				.map((line) => line as OengusLine), // Narrow type after filter check
+			async (line: OengusLine, index: number, arr: any) => {
+				nodecg.log.info(line);
+				oengusImportStatus.value.item = index + 1;
+				oengusImportStatus.value.total = arr.length;
+
+				const profiles = (line.runners || [])
+					.map(runner => runner.profile)  // Extract the profile from each runner
+					.filter((profile): profile is OengusProfile => profile !== undefined);  // Filter out undefined profiles
+
+				let players = await mapSeries(profiles, async (profile) => {
+					if (!profile) {
+						// Return a placeholder player object if profile is null or undefined
+						return {
+							name: 'Unknown',
+							displayName: 'Unknown',
+							social: {
+								twitch: 'undefined',
+							},
+							country: undefined,
+							pronouns: undefined,
+							customData: {},
+						};
+					}
+
+					const playerTwitch = profile.connections?.find((c) => c.platform === 'TWITCH')?.username || 'undefined';
+					const playerPronouns = Array.isArray(profile.pronouns)
+						? profile.pronouns
+						: (typeof profile.pronouns === 'string' ? (profile.pronouns as String).split(',') : undefined);
+
+					const player = {
+						name: profile.username || 'undefined',
+						displayName: profile.displayName || profile.username || 'undefined',
+						social: {
+							twitch: playerTwitch !== 'undefined' ? playerTwitch : 'undefined',
+						},
+						country: profile.country?.toLowerCase() || undefined,
+						pronouns: playerPronouns?.join(', ') || undefined,
+						customData: {},
+					};
+
+					if (!config.oengus.disableSpeedrunComLookup) {
+						const playerTwitter = profile.connections?.find((c) => c.platform === 'TWITTER')?.username;
+						const playerSrcom = profile.connections?.find((c) => c.platform === 'SPEEDRUNCOM')?.username;
+
+						const data = await searchForUserDataMultiple(
+							{ type: 'srcom', val: playerSrcom },
+							{ type: 'twitch', val: playerTwitch },
+							{ type: 'twitter', val: playerTwitter },
+							{ type: 'name', val: profile.username }
+						);
+
+						if (data) {
+							if (playerTwitch === 'undefined') {
+								const tURL = data.twitch?.uri;
+								player.social.twitch = getTwitchUserFromURL(tURL) || 'undefined';
+							}
+							player.country = player.country || data.location?.country.code?.toLowerCase();
+							player.pronouns = player.pronouns || data.pronouns?.toLowerCase();
 						}
 					}
-				}
-				return player;
-			});
-			return players;
-		});
+
+					return player;
+				});
+				return players;
+			}
+		);
+
 		resetOengusImportStatus();
 		resetImportStatus();
 		return playersArray.flat();
@@ -223,7 +225,7 @@ async function importOengusPlayers(marathonShort: string, useJapanese: boolean) 
  * @param colData Array of strings (or nulls), obtained from the Horaro JSON data.
  */
 function generateRunHash(colData: (string | null)[]): string {
-  return crypto.createHash('sha1').update(colData.join(), 'utf8').digest('hex');
+	return crypto.createHash('sha1').update(colData.join(), 'utf8').digest('hex');
 }
 
 /**
@@ -232,30 +234,30 @@ function generateRunHash(colData: (string | null)[]): string {
  * @param dashID UUID of dashboard element, generated on panel load and passed here.
  */
 async function loadSchedule(
-  url: string,
-  dashID: string
+	url: string,
+	dashID: string
 ): Promise<HoraroSchedule> {
-  try {
-    let jsonURL = `${url}.json`;
-    if (url.match(/\?key=/)) {
-      // If schedule URL has a key in it, extract it correctly.
-      const urlMatch = (url.match(/(.*?)(?=(\?key=))/) as RegExpMatchArray)[0];
-      const keyMatch = (
-        url.match(/(?<=(\?key=))(.*?)$/) as RegExpMatchArray
-      )[0];
-      jsonURL = `${urlMatch}.json?key=${keyMatch}`;
-    }
-    const resp = await needle('get', encodeURI(jsonURL));
-    if (resp.statusCode !== 200) {
-      throw new Error(`HTTP status code was ${resp.statusCode}`);
-    }
-    scheduleDataCache[dashID] = resp.body;
-    nodecg.log.debug('[Horaro Import] Schedule successfully loaded');
-    return resp.body;
-  } catch (err) {
-    nodecg.log.debug('[Horaro Import] Schedule could not be loaded:', err);
-    throw err;
-  }
+	try {
+		let jsonURL = `${url}.json`;
+		if (url.match(/\?key=/)) {
+			// If schedule URL has a key in it, extract it correctly.
+			const urlMatch = (url.match(/(.*?)(?=(\?key=))/) as RegExpMatchArray)[0];
+			const keyMatch = (
+				url.match(/(?<=(\?key=))(.*?)$/) as RegExpMatchArray
+			)[0];
+			jsonURL = `${urlMatch}.json?key=${keyMatch}`;
+		}
+		const resp = await needle('get', encodeURI(jsonURL));
+		if (resp.statusCode !== 200) {
+			throw new Error(`HTTP status code was ${resp.statusCode}`);
+		}
+		scheduleDataCache[dashID] = resp.body;
+		nodecg.log.debug('[Horaro Import] Schedule successfully loaded');
+		return resp.body;
+	} catch (err) {
+		nodecg.log.debug('[Horaro Import] Schedule could not be loaded:', err);
+		throw err;
+	}
 }
 
 /**
@@ -265,7 +267,7 @@ async function loadSchedule(
  * @param oengusShort shortName of oengus Marathon to look up players
  * @param useJPOengusNames if using JP usernames for Oengus
  */
-async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort: string, useJPOengusNames: boolean): Promise<void> {
+async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort: string, scheduleSlug: string, useJPOengusNames: boolean): Promise<void> {
 	try {
 		horaroImportStatus.value.importing = true;
 		const data = scheduleDataCache[dashID];
@@ -297,7 +299,7 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 		// Filtering out any games on the ignore list before processing them all.
 		const newRunDataArray = await mapSeries(runItems.filter((run) => (
 			!checkGameAgainstIgnoreList(run.data[opts.columns.game], 'horaro')
-		)), async (run, index, arr) => {
+		)), async (run: any, index: number, arr: any) => {
 			horaroImportStatus.value.item = index + 1;
 			horaroImportStatus.value.total = arr.length;
 
@@ -307,8 +309,8 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 			// and for actual defined IDs from a column should never happen, but idiot proofing it.
 			const externalID = run.data[opts.columns.externalID] || generateRunHash(run.data);
 			let matchingOldRun;
-			if (!externalIDsSeen.includes(externalID)) {
-				matchingOldRun = runDataArray.value.find((oldRun) => oldRun.externalID === externalID);
+			if (externalIDsSeen.indexOf(externalID) === -1) {
+				matchingOldRun = runDataArray.value.find((oldRun: any) => oldRun.externalID === externalID);
 				externalIDsSeen.push(externalID);
 			}
 
@@ -343,19 +345,19 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 					[, srcomGameTwitch] = await to(searchForTwitchGame(game.str));
 				}
 			}
-      let gameCover = '';
+			let gameCover = '';
 			// Verify some game directory supplied exists on Twitch.
 			for (const str of [gameTwitch, srcomGameTwitch, game.str]) {
 				if (str) {
-          const twitchDirectoryResult = await to(verifyTwitchDir(gameTwitch || str));
-          gameCover = twitchDirectoryResult[1]?.gameCover || 'undefined';
+					const twitchDirectoryResult = await to(verifyTwitchDir(gameTwitch || str));
+					gameCover = twitchDirectoryResult[1]?.gameCover || 'undefined';
 					if (gameTwitch) {
 						break; // If a directory was successfully found, stop loop early.
 					}
 				}
 			}
 			runData.gameTwitch = gameTwitch;
-      runData.customData.gameCover = gameCover;
+			runData.customData.gameCover = gameCover;
 
 			// Scheduled Date/Time
 			runData.scheduledS = run.scheduled_t;
@@ -384,7 +386,7 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 				if (!customDataConfig) {
 					return;
 				}
-				const colSetting = customDataConfig.find((setting) => setting.key === col);
+				const colSetting = customDataConfig.find((setting: any) => setting.key === col);
 				if (!colSetting) {
 					return;
 				}
@@ -395,7 +397,7 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 				}
 			});
 
-			const allOengusPlayers = await importOengusPlayers(oengusShort, useJPOengusNames);
+			const allOengusPlayers = await importOengusPlayers(oengusShort, scheduleSlug, useJPOengusNames);
 
 			// Players
 			const playerList = run.data[opts.columns.player];
@@ -407,7 +409,7 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 				];
 				const teamsRaw = await mapSeries(
 					playerList.split(teamSplittingRegex[opts.split]),
-					(team) => {
+					(team: any) => {
 						const nameMatch = team.match(/^(.+)(?=:\s)/);
 						return {
 							name: (nameMatch) ? nameMatch[0] : undefined,
@@ -421,7 +423,7 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 				// Mapping team information from above into needed format.
 				runData.teams = await mapSeries(
 					teamsRaw,
-					async (rawTeam) => {
+					async (rawTeam: any) => {
 						const team: RunDataTeam = {
 							id: uuid(),
 							name: parseMarkdown(rawTeam.name).str,
@@ -431,11 +433,14 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 						// Mapping player information into needed format.
 						team.players = await mapSeries(
 							rawTeam.players,
-							async (rawPlayer) => {
-								const {str, url} = parseMarkdown(rawPlayer);
+							async (rawPlayer: any) => {
+								const { str, url } = parseMarkdown(rawPlayer);
 								const twitchUsername = getTwitchUserFromURL(url);
-								let oengusPlayer = allOengusPlayers.find((player) => player.name === str);
-								if (!oengusPlayer) oengusPlayer = allOengusPlayers.find((player => player.displayName === str));
+
+								let oengusPlayer = allOengusPlayers.find((player: any) => {
+									return player.name === str
+								});
+								if (!oengusPlayer) oengusPlayer = allOengusPlayers.find(((player: any) => player.displayName === str));
 								const player: RunDataPlayer = {
 									name: oengusPlayer?.displayName || str || '',
 									id: uuid(),
@@ -449,10 +454,10 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 								};
 								if (!(config.schedule || config.horaro).disableSpeedrunComLookup) {
 									const sData = await searchForUserDataMultiple(
-										{type: 'twitch', val: twitchUsername},
-										{type: 'name', val: str},
-										{type: 'twitch', val: str},
-										{type: 'twitter', val: str},
+										{ type: 'twitch', val: twitchUsername },
+										{ type: 'name', val: str },
+										{ type: 'twitch', val: str },
+										{ type: 'twitter', val: str },
 									);
 									if (sData) {
 										// Always favour the supplied Twitch username from schedule if available.
@@ -490,28 +495,29 @@ async function importSchedule(optsO: ImportOptions, dashID: string, oengusShort:
 	}
 }
 
-nodecg.listenFor('loadComboSchedule', (data, ack) => {
-  loadSchedule(data.url, data.dashID)
-    .then((data_) => processAck(ack, null, data_))
-    .catch((err) => processAck(ack, err));
+nodecg.listenFor('loadComboSchedule', (data: any, ack: any) => {
+	loadSchedule(data.url, data.dashID)
+		.then((data_) => processAck(ack, null, data_))
+		.catch((err) => processAck(ack, err));
 });
 
-nodecg.listenFor('importComboSchedule', async (data, ack) => {
-  try {
-    if (horaroImportStatus.value.importing) {
-      throw new Error('Already importing schedule');
-    }
-    nodecg.log.info('[Combo Import] Started importing schedule');
-    await importSchedule(
-      data.opts,
-      data.dashID,
-      data.oengusShort,
-      data.useJPOengusNames
-    );
-    nodecg.log.info('[Combo Import] Successfully imported schedule');
-    processAck(ack, null);
-  } catch (err) {
-    nodecg.log.warn('[Combo Import] Error importing schedule:', err);
-    processAck(ack, err);
-  }
+nodecg.listenFor('importComboSchedule', async (data: any, ack: any) => {
+	try {
+		if (horaroImportStatus.value.importing) {
+			throw new Error('Already importing schedule');
+		}
+		nodecg.log.info('[Combo Import] Started importing schedule');
+		await importSchedule(
+			data.opts,
+			data.dashID,
+			data.oengusShort,
+			data.scheduleSlug,
+			data.useJPOengusNames
+		);
+		nodecg.log.info('[Combo Import] Successfully imported schedule');
+		processAck(ack, null);
+	} catch (err) {
+		nodecg.log.warn('[Combo Import] Error importing schedule:', err);
+		processAck(ack, err);
+	}
 });

@@ -193,6 +193,10 @@
           "type": "string",
           "default": "SHORTNAME"
         },
+        "defaultScheduleSlug": {
+          "type": "string",
+          "default": "schedule"
+        },
         "useJapanese": {
           "type": "boolean",
           "default": false
@@ -216,7 +220,8 @@
         }
       },
       "required": [
-        "defaultMarathon",
+        "defaultMarathon", 
+        "defaultScheduleSlug",
         "useJapanese",
         "disableSpeedrunComLookup"
       ]

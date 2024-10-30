@@ -17,7 +17,8 @@
 		"importProgress": "Importing {item}/{total}",
 		"clearCustomConfig": "Clear Custom Configuration",
 		"shortname": "Oengus Marathon Shortname",
-		"helpText": "Insert the Oengus marathon shortname (not including \"/schedule\") above and press the \"Import Schedule Data\" button.",
+    "scheduleSlug": "Oengus Marathon Schedule Slug",
+    "helpText": "Insert the Oengus marathon shortname (not including \"/schedule\") above and press the \"Import Schedule Data\" button. Keep in mind that it may take 5 minutes after saving for your schedule to update.",
 		"useJapaneseNames": "Use Japanese names?"
 	},
 	"ja": {
@@ -53,6 +54,16 @@
       :label="$t('shortname')"
       placeholder="id"
       prefix="/marathon/"
+      :disabled="importStatus.importing"
+    />
+    <!-- Oengus scheduleId Field -->
+    <v-text-field
+      v-model="marathonScheduleSlug"
+      filled
+      hide-details
+      :label="$t('scheduleSlug')"
+      placeholder="id"
+      prefix="/schedule/"
       :disabled="importStatus.importing"
     />
     <div class="mt-2">
@@ -194,6 +205,7 @@ import { storeModule } from './store';
 })
 export default class extends Vue {
   marathonShort = nodecg.bundleConfig.oengus.defaultMarathon || '';
+  marathonScheduleSlug = nodecg.bundleConfig.oengus.defaultScheduleSlug || 'schedule';
   useJapanese = nodecg.bundleConfig.oengus.useJapanese;
   @replicantNS.State((s) => s.reps.horaroImportStatus)
   readonly importStatus!: HoraroImportStatus;
@@ -248,7 +260,7 @@ export default class extends Vue {
         storeModule.loadOpts();
       } else {
         this.predictColumns();
-      }
+      } 
     } catch (err) {
       this.loaded = false;
     }
@@ -301,6 +313,7 @@ export default class extends Vue {
           opts: storeModule.opts,
           dashID: this.dashID,
           oengusShort: this.marathonShort,
+          scheduleSlug: this.marathonScheduleSlug,
           useJPOengusNames: this.useJapanese,
         });
       } catch (err) {
