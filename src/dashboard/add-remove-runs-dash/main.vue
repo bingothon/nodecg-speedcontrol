@@ -13,24 +13,31 @@
 
 <template>
   <v-app>
-    <v-btn class="green darken-2" @click="openAddDialog">
-      <v-icon class="pr-2"> mdi-plus-box </v-icon>{{ $t('addNewRun') }}
+    <v-btn
+      class="green darken-2"
+      @click="openAddDialog"
+    >
+      <v-icon class="pr-2">
+        mdi-plus-box
+      </v-icon>{{ $t('addNewRun') }}
     </v-btn>
     <v-btn
       class="red darken-2 mt-3"
       :disabled="disableRemoveAll"
       @click="removeAllRunsConfirm"
     >
-      <v-icon class="pr-2"> mdi-delete </v-icon>{{ $t('removeAllRuns') }}
+      <v-icon class="pr-2">
+        mdi-delete
+      </v-icon>{{ $t('removeAllRuns') }}
     </v-btn>
   </v-app>
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { Alert, RunModification } from '@nodecg-speedcontrol/types';
 import { Timer } from '@nodecg-speedcontrol/types/schemas';
-import { RunModification, Alert } from '@nodecg-speedcontrol/types';
-import { getDialog } from '../_misc/helpers';
+import { Component, Vue } from 'vue-property-decorator';
+import { checkDialog, getDialog } from '../_misc/helpers';
 import { replicantNS } from '../_misc/replicant_store';
 
 @Component
@@ -42,22 +49,24 @@ export default class extends Vue {
   }
 
   openAddDialog(): void {
-    const dialog = getDialog(
-      'run-modification-dialog'
-    ) as RunModification.Dialog;
-    if (dialog) {
-      dialog.openDialog({ mode: 'New' });
-    }
+    checkDialog('run-modification-dialog').then(() => {
+      const dialog = getDialog('run-modification-dialog') as RunModification.Dialog;
+      if (dialog) {
+        dialog.openDialog({ mode: 'New' });
+      }
+    });
   }
 
   removeAllRunsConfirm(): void {
-    const dialog = getDialog('alert-dialog') as Alert.Dialog;
-    if (dialog) {
-      dialog.openDialog({
-        name: 'RemoveAllRunsConfirm',
-        func: this.removeAllRuns,
-      });
-    }
+    checkDialog('alert-dialog').then(() => {
+      const dialog = getDialog('alert-dialog') as Alert.Dialog;
+      if (dialog) {
+        dialog.openDialog({
+          name: 'RemoveAllRunsConfirm',
+          func: this.removeAllRuns,
+        });
+      }
+    });
   }
 
   async removeAllRuns(confirm: boolean): Promise<void> {
@@ -74,7 +83,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string
+        this.$t('panelTitle') as string,
       );
     }
   }

@@ -178,7 +178,7 @@ import {
 import { debounce } from 'lodash';
 import { DeepReadonly } from 'vue';
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import { getDialog, padTimeNumber } from '../_misc/helpers';
+import { checkDialog, getDialog, padTimeNumber } from '../_misc/helpers';
 import { replicantNS } from '../_misc/replicant_store';
 import { storeModule } from './store';
 
@@ -293,10 +293,12 @@ export default class extends Vue {
         game: this.game,
       });
       if (noTwitchGame) {
-        const dialog = getDialog('alert-dialog') as Alert.Dialog;
-        if (dialog) {
-          dialog.openDialog({ name: 'NoTwitchGame' });
-        }
+        checkDialog('alert-dialog').then(() => {
+          const dialog = getDialog('alert-dialog') as Alert.Dialog;
+          if (dialog) {
+            dialog.openDialog({ name: 'NoTwitchGame' });
+          }
+        });
       }
     } catch (err) {
       // catch
@@ -325,13 +327,15 @@ export default class extends Vue {
   }
 
   logoutConfirm(): void {
-    const dialog = getDialog('alert-dialog') as Alert.Dialog;
-    if (dialog) {
-      dialog.openDialog({
-        name: 'TwitchLogoutConfirm',
-        func: this.logout,
-      });
-    }
+    checkDialog('alert-dialog').then(() => {
+      const dialog = getDialog('alert-dialog') as Alert.Dialog;
+      if (dialog) {
+        dialog.openDialog({
+          name: 'TwitchLogoutConfirm',
+          func: this.logout,
+        });
+      }
+    });
   }
 
   async logout(confirm: boolean): Promise<void> {

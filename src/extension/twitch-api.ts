@@ -183,7 +183,7 @@ async function refreshChannelInfo(): Promise<void> {
  */
 async function searchForGame(
   query: string
-  ): Promise<{ id: string; name: string; gameCover: string }> {
+): Promise<{ id: string; name: string; gameCover: string }> {
   if (twitchAPIData.value.state !== 'on') {
     throw new Error('Integration not ready');
   }
@@ -200,8 +200,6 @@ async function searchForGame(
   } else if (!resp.body.data || !resp.body.data.length) {
     throw new Error(`No game matches for "${query}"`);
   }
-  
-  
 
   // Update the type to include gameCover
   const results = resp.body.data as {
@@ -510,7 +508,7 @@ if (config.twitch.enabled) {
 
 /**
  * Checks if the current access token is still valid, if yes returns it.
- * Otherwise tries to refresh the token 
+ * Otherwise tries to refresh the token
  */
 async function getOrRefreshAccessToken(): Promise<string> {
   if (twitchAPIData.value.state !== 'on') {

@@ -1,11 +1,7 @@
 import { RunData, RunDataArray, SendMessageAck } from '@nodecg-speedcontrol/types';
 import type NodeCG from '@nodecg/types';
 import _ from 'lodash';
-import removeMd from 'remove-markdown';
-import { ParsedMarkdown } from '@nodecg-speedcontrol/types';
-import MarkdownIt from 'markdown-it';
 import { get } from './nodecg';
-const md = new MarkdownIt();
 
 const nodecg = get();
 
@@ -171,24 +167,4 @@ export function getTwitterUserFromURL(url?: string): string | undefined {
   return sanitised && sanitised.includes('twitter.com')
     ? sanitised.split('/')[sanitised.split('/').length - 1]
     : undefined;
-}
-
-
-/**
- * Strips Markdown formatting and extracts the URL if available.
- * @param str Markdowned string to parse.
- */
-export function parseMarkdown(str?: string | null): ParsedMarkdown {
-  const results: ParsedMarkdown = {};
-  if (str) {
-    try {
-      const res = md.parseInline(str, {});
-      const url = res[0]?.children?.find((child) =>
-        child.type === 'link_open' && child.attrs?.[0]?.[0] === 'href'
-      );
-      results.url = url?.attrs?.[0]?.[1];
-      results.str = removeMd(str);
-    } catch {}
-  }
-  return results;
 }

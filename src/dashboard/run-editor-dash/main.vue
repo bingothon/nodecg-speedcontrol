@@ -25,11 +25,11 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import { RunDataActiveRun } from '@nodecg-speedcontrol/types/schemas';
 import { RunModification } from '@nodecg-speedcontrol/types';
+import { RunDataActiveRun } from '@nodecg-speedcontrol/types/schemas';
+import { Component, Vue } from 'vue-property-decorator';
 import RunList from '../_misc/components/RunList.vue';
-import { getDialog } from '../_misc/helpers';
+import { checkDialog, getDialog } from '../_misc/helpers';
 import { replicantNS } from '../_misc/replicant_store';
 
 @Component({
@@ -38,21 +38,21 @@ import { replicantNS } from '../_misc/replicant_store';
   },
 })
 export default class extends Vue {
-  @replicantNS.State((s) => s.reps.runDataActiveRun) readonly activeRun!:
-    | RunDataActiveRun
-    | undefined;
+  @replicantNS.State(
+    (s) => s.reps.runDataActiveRun,
+  ) readonly activeRun!: RunDataActiveRun | undefined;
 
   editActiveRun(): void {
     if (this.activeRun) {
-      const dialog = getDialog(
-        'run-modification-dialog'
-      ) as RunModification.Dialog;
-      if (dialog) {
-        dialog.openDialog({
-          mode: 'EditActive',
-          runData: this.activeRun,
-        });
-      }
+      checkDialog('run-modification-dialog').then(() => {
+        const dialog = getDialog('run-modification-dialog') as RunModification.Dialog;
+        if (dialog) {
+          dialog.openDialog({
+            mode: 'EditActive',
+            runData: this.activeRun,
+          });
+        }
+      });
     }
   }
 
@@ -60,7 +60,7 @@ export default class extends Vue {
     if (window.frameElement?.parentElement) {
       window.frameElement.parentElement.setAttribute(
         'display-title',
-        this.$t('panelTitle') as string
+        this.$t('panelTitle') as string,
       );
     }
   }

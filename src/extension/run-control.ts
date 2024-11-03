@@ -87,7 +87,7 @@ async function updateTwitchInformation(runData: RunData): Promise<boolean> {
     .replace(/{{game}}/g, runData.game || '')
     .replace(
       /{{players}}/g,
-      formatPlayersForTwitchTitle(runData, nodecg.bundleConfig.twitch.tagPlayersInStreamTitle),
+      formatPlayersForTwitchTitle(runData, nodecg.bundleConfig.twitch.tagPlayersInStreamTitle)
     )
     .replace(/{{category}}/g, runData.category || '');
 
@@ -164,7 +164,6 @@ async function removeRun(id?: string): Promise<void> {
     } else {
       runDataArray.value.splice(runIndex, 1);
       nodecg.log.debug(`[Run Control] Successfully removed run ${id}`);
-      return;
     }
   } catch (err) {
     nodecg.log.debug('[Run Control] Could not successfully remove run:', err);

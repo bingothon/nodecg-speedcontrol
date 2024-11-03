@@ -38,6 +38,9 @@ export interface Configschema {
 	oengus: {
 		defaultMarathon: string;
 		defaultScheduleSlug: string;
+		/**
+		 * DEPRECATED; left for compatibility reasons.
+		 */
 		useJapanese: boolean;
 		ignoreGamesWhileImporting?: IgnoreGamesWhileImporting;
 		disableSpeedrunComLookup: boolean;
