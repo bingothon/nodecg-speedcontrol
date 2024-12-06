@@ -177,7 +177,7 @@ async function importOengusPlayers(marathonShort: string,
               name: 'Unknown',
               displayName: 'Unknown',
               social: {
-                twitch: 'undefined',
+                twitch: '',
               },
               country: undefined,
               pronouns: undefined,
@@ -186,7 +186,7 @@ async function importOengusPlayers(marathonShort: string,
           }
 
           const playerTwitch = profile.connections?.find((c) =>
-            c.platform === 'TWITCH')?.username || 'undefined';
+            c.platform === 'TWITCH')?.username;
           const playerPronouns = Array.isArray(profile.pronouns)
             ? profile.pronouns
             : undefined;
@@ -195,7 +195,7 @@ async function importOengusPlayers(marathonShort: string,
             name: profile.username || 'undefined',
             displayName: profile.displayName || profile.username || 'undefined',
             social: {
-              twitch: playerTwitch !== 'undefined' ? playerTwitch : 'undefined',
+              twitch: playerTwitch ?? '',
             },
             country: profile.country?.toLowerCase() || undefined,
             pronouns: playerPronouns?.join(', ') || undefined,
@@ -216,9 +216,9 @@ async function importOengusPlayers(marathonShort: string,
             );
 
             if (data) {
-              if (playerTwitch === 'undefined') {
+              if (!player.social.twitch) {
                 const tURL = data.twitch?.uri;
-                player.social.twitch = getTwitchUserFromURL(tURL) || 'undefined';
+                player.social.twitch = getTwitchUserFromURL(tURL) ?? '';
               }
               player.country = player.country || data.location?.country.code?.toLowerCase();
               player.pronouns = player.pronouns || data.pronouns?.toLowerCase();
