@@ -190,7 +190,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import { DeepReadonly } from 'vue';
 import { Component, Vue } from 'vue-property-decorator';
-import { getDialog } from '../_misc/helpers';
+import {checkDialog, getDialog} from '../_misc/helpers';
 import { replicantNS } from '../_misc/replicant_store';
 import ConfigButton from './components/ConfigButton.vue';
 import Dropdown from './components/Dropdown.vue';
@@ -260,7 +260,7 @@ export default class extends Vue {
         storeModule.loadOpts();
       } else {
         this.predictColumns();
-      } 
+      }
     } catch (err) {
       this.loaded = false;
     }
@@ -296,15 +296,17 @@ export default class extends Vue {
     });
   }
 
-  importConfirm(): void {
-    const dialog = getDialog('alert-dialog') as Alert.Dialog;
-    if (dialog) {
-      dialog.openDialog({
-        name: 'ImportConfirm',
-        func: this.import,
-      });
-    }
-  }
+	importConfirm(): void {
+		checkDialog('alert-dialog').then(() => {
+			const dialog = getDialog('alert-dialog') as Alert.Dialog;
+			if (dialog) {
+				dialog.openDialog({
+					name: 'ImportConfirm',
+					func: this.import,
+				});
+			}
+		});
+	}
 
   async import(confirm: boolean): Promise<void> {
     if (confirm) {
