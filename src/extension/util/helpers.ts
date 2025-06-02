@@ -22,11 +22,11 @@ export function formatPlayersForTwitchTitle(runData: RunData, mentionChannels: b
  * @param runData Run Data object.
  */
 export function getTwitchChannels(runData: RunData): string[] {
-  const channels = runData.teams.map((team) =>
+  const channels = runData.teams.map((team) => (
     team.players
       .filter((player) => !!player.social.twitch)
       .map((player) => player.social.twitch as string)
-  );
+  ));
   return ([] as string[]).concat(...channels);
 }
 
@@ -58,9 +58,9 @@ export function msToTimeStr(ms: number): string {
   const seconds = Math.floor((ms / 1000) % 60);
   const minutes = Math.floor((ms / (1000 * 60)) % 60);
   const hours = Math.floor(ms / (1000 * 60 * 60));
-  return `${padTimeNumber(hours)}:${padTimeNumber(minutes)}:${padTimeNumber(
-    seconds
-  )}`;
+  return `${padTimeNumber(hours)
+  }:${padTimeNumber(minutes)
+  }:${padTimeNumber(seconds)}`;
 }
 
 /**
